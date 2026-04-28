@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Short Video Full System Test</title>
+
+<style>
+body {
+  font-family: Arial;
+  background: #111;
+  color: white;
+  padding: 20px;
+}
+
+.box {
+  background: #1e1e1e;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0;
+  border-radius: 5px;
+  border: none;
+}
+
+button {
+  padding: 8px 12px;
+  border: none;
+  background: #ff2d55;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+video {
+  width: 100%;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.card {
+  background: #222;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
+}
+
+.comment {
+  background: #333;
+  margin-top: 5px;
+  padding: 5px;
+  border-radius: 5px;
+}
+
+.reply {
+  margin-left: 15px;
+  font-size: 13px;
+  color: #ccc;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🎬 Short Video System Test</h2>
+
+<!-- UPLOAD -->
+<div class="box">
+  <h3>Upload Video</h3>
+  <input type="file" id="videoFile" accept="video/*" />
+  <textarea id="caption" placeholder="Caption"></textarea>
+  <button onclick="uploadVideo()">Upload</button>
+</div>
+
+<!-- FEED -->
+<div class="box">
+  <h3>Feed</h3>
+  <button onclick="loadFeed()">Reload</button>
+  <div id="feed"></div>
+</div>
+
+<script>
+const API = "http://localhost:5001/api/shortvideos";
+
+function token() {
+  return localStorage.getItem("token");
+}
+
+/* ================= UPLOAD ================= */
+async function uploadVideo() {
+  const file = document.getElementById("videoFile").files[0];
+  const caption = document.getElementById("caption").value;
+
+  if (!file) return alert("Select video");
+
+  const form = new FormData();
+  form.append("video", file);
+  form.append("caption", caption);
+
+  const res = await fetch(`${API}/short`, {
+    method: "POST",
+    headers: {
+      Authorization: token() ? `Bearer ${token()}` : ""
+    },
+    body: form
+  });
+
+  const data = await res.json();
+  alert(data.message);
+
+  loadFeed();
+}
+
+/* ================= FEED ================= */
+let viewed = new Set();
+
+async function loadFeed() {
+  const res = await fetch(`${API}/shorts`, {
+    headers: {
+      Authorization: token() ? `Bearer ${token()}` : ""
+    }
+  });
+
+  const data = await res.json();
+  const feed = document.getElementById("feed");
+  feed.innerHTML = "";
+
+  data.videos.forEach(v => {
+    const div = document.createElement("div");
+    div.className = "card";
+
+    div.innerHTML = `
+      <video id="vid-${v._id}" src="${v.videoUrl}" autoplay muted loop playsinline></video>
+
+      <p>${v.caption || ""}</p>
+
+      ❤️ <span id="like-${v._id}">${v.likeCount}</span>
+      👁️ ${v.views}
+
+      <button onclick="likeVideo('${v._id}')">Like</button>
+
+      <div>
+        <input id="c-${v._id}" placeholder="Comment..." />
+        <button onclick="comment('${v._id}')">Send</button>
+      </div>
+
+      <div id="comments-${v._id}"></div>
+    `;
+
+    feed.appendChild(div);
+
+    /* VIEW TRACKING */
+    const vid = document.getElementById(`vid-${v._id}`);
+    vid.addEventListener("play", () => {
+      if (viewed.has(v._id)) return;
+      viewed.add(v._id);
+
+      fetch(`${API}/short/${v._id}/view`, { method: "POST" });
+    });
+
+    loadComments(v._id);
+  });
+}
+
+/* ================= LIKE ================= */
+async function likeVideo(id) {
+  await fetch(`${API}/short/${id}/like`, {
+    method: "POST",
+    headers: {
+      Authorization: token() ? `Bearer ${token()}` : ""
+    }
+  });
+
+  loadFeed();
+}
+
+/* ================= COMMENT ================= */
+async function comment(videoId) {
+  const input = document.getElementById(`c-${videoId}`);
+  const text = input.value.trim();
+
+  if (!text) return;
+
+  await fetch(`${API}/short/${videoId}/comment`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token() ? `Bearer ${token()}` : ""
+    },
+    body: JSON.stringify({ text })
+  });
+
+  input.value = "";
+  loadComments(videoId);
+}
+
+/* ================= REPLY ================= */
+async function reply(commentId, videoId) {
+  const text = prompt("Reply:");
+
+  if (!text) return;
+
+  await fetch(`${API}/short/comment/${commentId}/reply`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: token() ? `Bearer ${token()}` : ""
+    },
+    body: JSON.stringify({ text })
+  });
+
+  loadComments(videoId);
+}
+
+/* ================= COMMENTS ================= */
+async function loadComments(videoId) {
+  const res = await fetch(`${API}/short/${videoId}/comments`, {
+    headers: {
+      Authorization: token() ? `Bearer ${token()}` : ""
+    }
+  });
+
+  const data = await res.json();
+  const box = document.getElementById(`comments-${videoId}`);
+
+  box.innerHTML = "";
+
+  data.comments.forEach(c => {
+    const div = document.createElement("div");
+    div.className = "comment";
+
+    div.innerHTML = `
+      ${c.text}
+      <button onclick="reply('${c._id}', '${videoId}')">Reply</button>
+
+      <div class="reply">
+        ${(c.replies || []).map(r => `↳ ${r.text}`).join("<br>")}
+      </div>
+    `;
+
+    box.appendChild(div);
+  });
+}
+
+/* INIT */
+loadFeed();
+</script>
+
+</body>
+</html>

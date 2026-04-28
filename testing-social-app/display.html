@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feed</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0d0f;
+      --surface:   #18181c;
+      --surface2:  #1e1e24;
+      --border:    #2a2a32;
+      --accent:    #ff2d55;
+      --accent-lo: rgba(255,45,85,.10);
+      --text:      #f0f0f5;
+      --muted:     #7a7a8c;
+      --radius:    14px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 60px;
+    }
+
+    /* ── Top nav ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,13,15,.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .nav-actions { display: flex; gap: 12px; align-items: center; }
+    .nav-btn {
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      background: transparent;
+      transition: all .2s;
+    }
+    .nav-btn:hover { border-color: var(--accent); color: var(--text); }
+    .nav-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .nav-btn.primary:hover { opacity: .85; }
+
+    /* ── Feed container ── */
+    main {
+      max-width: 560px;
+      margin: 0 auto;
+      padding: 28px 16px 0;
+    }
+
+    .feed-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      margin-bottom: 24px;
+      letter-spacing: -.3px;
+    }
+
+    /* ── Post card ── */
+    .post {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      overflow: hidden;
+      animation: fadeUp .35s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .post-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+    }
+    .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--accent-lo);
+      border: 1.5px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .username {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    /* ── Media ── */
+    .post-media img,
+    .post-media video {
+      width: 100%;
+      display: block;
+      max-height: 480px;
+      object-fit: cover;
+      background: var(--bg);
+    }
+
+    /* ── Caption ── */
+    .post-caption {
+      padding: 12px 16px 4px;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #ccc;
+    }
+
+    /* ── Actions row ── */
+    .post-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+    }
+    .like-btn {
+      padding: 6px 16px;
+      background: var(--accent-lo);
+      border: 1px solid transparent;
+      border-radius: 20px;
+      color: var(--accent);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .like-btn:hover,
+    .like-btn.liked {
+      background: var(--accent);
+      color: #fff;
+    }
+    .like-count {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    /* ── Comment box ── */
+    .comment-box {
+      display: flex;
+      gap: 8px;
+      padding: 0 16px 14px;
+    }
+    .comment-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 9px 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .comment-input:focus { border-color: var(--accent); }
+
+    .comment-send-btn {
+      padding: 9px 16px;
+      background: var(--accent);
+      border: none;
+      border-radius: 20px;
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .18s;
+    }
+    .comment-send-btn:hover { opacity: .85; }
+
+    /* ── Comments list ── */
+    .comments-list {
+      border-top: 1px solid var(--border);
+      padding: 10px 16px 14px;
+    }
+
+    .comment-item {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 9px 11px;
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .comment-item b { color: var(--text); }
+
+    .comment-meta {
+      margin-top: 6px;
+      display: flex;
+      gap: 8px;
+    }
+    .meta-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0;
+      transition: color .15s;
+    }
+    .meta-btn:hover { color: var(--text); }
+    .meta-btn.del:hover { color: var(--accent); }
+
+    .reply-container {
+      margin-left: 14px;
+      border-left: 2px solid var(--border);
+      padding-left: 10px;
+      margin-top: 6px;
+    }
+
+    /* reply input */
+    .reply-box {
+      margin-top: 6px;
+    }
+    .reply-box input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 6px 12px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      outline: none;
+      width: 65%;
+    }
+    .reply-box button {
+      margin-left: 6px;
+      padding: 6px 12px;
+      background: var(--accent);
+      border: none;
+      border-radius: 16px;
+      color: #fff;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* ── Loading / empty states ── */
+    .state-msg {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .feed-title { font-size: 22px; }
+      .post-media img,
+      .post-media video { max-height: 320px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="logo" href="display.html">🔥 demo-post</a>
+    <div class="nav-actions">
+      <a class="nav-btn primary" href="create-post.html">+ Post</a>
+      <button class="nav-btn" id="logoutBtn">Log out</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="feed-title">Feed</div>
+    <div id="feed">
+      <div class="state-msg">
+        <div class="spinner"></div>
+        Loading posts…
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const API_BASE = "http://localhost:5001/api";
+
+    /* ── Auth ── */
+    function getToken() { return localStorage.getItem("token"); }
+
+    function requireAuth() {
+      if (!getToken()) {
+        alert("Please login first");
+        window.location.href = "/login.html";
+        return false;
+      }
+      return true;
+    }
+
+    if (!requireAuth()) throw new Error("No token");
+
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("token");
+      window.location.href = "/login.html";
+    });
+
+    /* ── API wrapper ── */
+    async function api(url, options = {}) {
+      const token = getToken();
+
+      const res = await fetch(API_BASE + url, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(options.headers || {}),
+        },
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || "Request failed");
+      return data;
+    }
+
+    /* ── Like ── */
+    async function toggleLike(postId, btn, countEl) {
+      const data      = await api(`/likes/${postId}`, { method: "POST" });
+      const countData = await api(`/likes/${postId}/count`);
+      countEl.textContent = countData.likes + " likes";
+      btn.textContent     = data.liked ? "❤️ Liked" : "🤍 Like";
+      btn.classList.toggle("liked", data.liked);
+    }
+
+    /* ── Comments ── */
+    async function loadComments(postId, container) {
+      const data = await api(`/comments/${postId}`);
+      container.innerHTML = "";
+
+      if (!data.comments.length) {
+        container.innerHTML = `<p style="color:var(--muted);font-size:13px">No comments yet.</p>`;
+        return;
+      }
+
+      data.comments.forEach(comment => {
+        const div = document.createElement("div");
+        div.className = "comment-item";
+        div.innerHTML = `
+          <b>${comment.userId?.userName || "User"}</b>: ${comment.text}
+          <div class="comment-meta">
+            <button class="meta-btn reply-toggle">↩ Reply</button>
+            <button class="meta-btn del" data-id="${comment._id}">✕ Delete</button>
+          </div>
+          <div class="reply-box"></div>
+        `;
+
+        div.querySelector(".del").addEventListener("click", () => deleteComment(comment._id, postId, container));
+        div.querySelector(".reply-toggle").addEventListener("click", function() {
+          toggleReplyInput(postId, comment._id, div.querySelector(".reply-box"));
+        });
+
+        /* nested replies */
+        if (comment.replies?.length) {
+          const repliesDiv = document.createElement("div");
+          repliesDiv.className = "reply-container";
+          comment.replies.forEach(reply => {
+            const r = document.createElement("div");
+            r.className = "comment-item";
+            r.innerHTML = `
+              <b>${reply.userId?.userName || "User"}</b>: ${reply.text}
+              <div class="comment-meta">
+                <button class="meta-btn del" data-id="${reply._id}">✕ Delete</button>
+              </div>
+            `;
+            r.querySelector(".del").addEventListener("click", () => deleteComment(reply._id, postId, container));
+            repliesDiv.appendChild(r);
+          });
+          div.appendChild(repliesDiv);
+        }
+
+        container.appendChild(div);
+      });
+    }
+
+    function toggleReplyInput(postId, parentId, box) {
+      if (box.innerHTML) { box.innerHTML = ""; return; }
+      box.innerHTML = `<input placeholder="Reply…" /><button>Send</button>`;
+      const input = box.querySelector("input");
+      box.querySelector("button").onclick = async () => {
+        if (!input.value.trim()) return;
+        await api(`/comments/${postId}`, {
+          method: "POST",
+          body: JSON.stringify({ text: input.value.trim(), parentId }),
+        });
+        loadComments(postId, box.closest(".comments-list"));
+      };
+    }
+
+    async function addComment(postId, input, container) {
+      if (!input.value.trim()) return;
+      await api(`/comments/${postId}`, {
+        method: "POST",
+        body: JSON.stringify({ text: input.value.trim() }),
+      });
+      input.value = "";
+      loadComments(postId, container);
+    }
+
+    async function deleteComment(commentId, postId, container) {
+      if (!confirm("Delete this comment?")) return;
+      await api(`/comments/${commentId}`, { method: "DELETE" });
+      loadComments(postId, container);
+    }
+
+    /* ── Build post card ── */
+    function buildPost(post) {
+      const postId = post._id;
+      const media  = post.media?.[0];
+
+      const article = document.createElement("article");
+      article.className = "post";
+
+      const mediaHTML = media
+        ? (media.type === "video"
+            ? `<div class="post-media"><video controls src="${media.url}"></video></div>`
+            : `<div class="post-media"><img src="${media.url}" alt="post image" loading="lazy" /></div>`)
+        : "";
+
+      article.innerHTML = `
+        <div class="post-header">
+          <div class="avatar">👤</div>
+          <span class="username">${post.userId?.userName || "Unknown"}</span>
+        </div>
+        ${mediaHTML}
+        ${post.caption ? `<div class="post-caption">${post.caption}</div>` : ""}
+        <div class="post-actions">
+          <button class="like-btn" id="like-${postId}">🤍 Like</button>
+          <span class="like-count" id="count-${postId}">0 likes</span>
+        </div>
+        <div class="comment-box">
+          <input class="comment-input" id="input-${postId}" placeholder="Add a comment…" />
+          <button class="comment-send-btn" id="send-${postId}">Post</button>
+        </div>
+        <div class="comments-list" id="comments-${postId}"></div>
+      `;
+
+      const likeBtn    = article.querySelector(`#like-${postId}`);
+      const countEl    = article.querySelector(`#count-${postId}`);
+      const input      = article.querySelector(`#input-${postId}`);
+      const sendBtn    = article.querySelector(`#send-${postId}`);
+      const commentBox = article.querySelector(`#comments-${postId}`);
+
+      likeBtn.addEventListener("click", () => toggleLike(postId, likeBtn, countEl));
+      sendBtn.addEventListener("click", () => addComment(postId, input, commentBox));
+      input.addEventListener("keydown", e => {
+        if (e.key === "Enter") addComment(postId, input, commentBox);
+      });
+
+      api(`/likes/${postId}/count`).then(d => {
+        countEl.textContent = d.likes + " likes";
+      }).catch(() => {});
+
+      loadComments(postId, commentBox);
+
+      return article;
+    }
+
+    /* ── Load feed ── */
+    async function loadFeed() {
+      const feedEl = document.getElementById("feed");
+
+      try {
+        const data = await api("/posts");
+        feedEl.innerHTML = "";
+
+        if (!data.posts?.length) {
+          feedEl.innerHTML = `<div class="state-msg">No posts yet. Be the first!</div>`;
+          return;
+        }
+
+        data.posts.forEach(post => feedEl.appendChild(buildPost(post)));
+      } catch (err) {
+        feedEl.innerHTML = `<div class="state-msg">❌ Failed to load feed: ${err.message}</div>`;
+      }
+    }
+
+    loadFeed();
+  </script>
+</body>
+</html>

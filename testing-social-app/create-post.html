@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Post</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0d0f;
+      --surface:   #18181c;
+      --border:    #2a2a32;
+      --accent:    #ff2d55;
+      --accent-lo: rgba(255,45,85,.12);
+      --text:      #f0f0f5;
+      --muted:     #7a7a8c;
+      --radius:    14px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px;
+    }
+
+    /* ── Nav bar ── */
+    nav {
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 36px;
+    }
+    nav .logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--text);
+      text-decoration: none;
+    }
+    nav a.feed-link {
+      font-size: 14px;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color .2s;
+    }
+    nav a.feed-link:hover { color: var(--text); }
+
+    /* ── Card ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 520px;
+      padding: 36px 32px;
+    }
+
+    .card h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      margin-bottom: 28px;
+      letter-spacing: -.3px;
+    }
+
+    /* ── Form elements ── */
+    .field { margin-bottom: 20px; }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--accent);
+    }
+
+    /* ── File drop zone ── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+    }
+    .drop-zone:hover,
+    .drop-zone.drag-over {
+      border-color: var(--accent);
+      background: var(--accent-lo);
+    }
+    .drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .drop-zone .icon { font-size: 36px; margin-bottom: 8px; }
+    .drop-zone p   { font-size: 14px; color: var(--muted); }
+    .drop-zone .filename {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    /* ── Preview ── */
+    #preview-wrap {
+      margin-top: 14px;
+      border-radius: 10px;
+      overflow: hidden;
+      display: none;
+    }
+    #preview-wrap img,
+    #preview-wrap video {
+      width: 100%;
+      border-radius: 10px;
+      max-height: 300px;
+      object-fit: cover;
+    }
+
+    /* ── Button ── */
+    .btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn:hover   { opacity: .88; }
+    .btn:active  { transform: scale(.98); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Status ── */
+    #status {
+      margin-top: 16px;
+      font-size: 14px;
+      min-height: 20px;
+      text-align: center;
+      font-weight: 500;
+    }
+    #status.ok  { color: #30d158; }
+    #status.err { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a class="logo" href="display.html">🔥 demo-post</a>
+    <a class="feed-link" href="display.html">← Back to feed</a>
+  </nav>
+
+  <div class="card">
+    <h2>Create Post</h2>
+
+    <!-- Caption -->
+    <div class="field">
+      <label>Caption</label>
+      <input type="text" id="caption" placeholder="What's on your mind?" />
+    </div>
+
+    <!-- Media -->
+    <div class="field">
+      <label>Photo / Video</label>
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="file" accept="image/*,video/*" />
+        <div class="icon">📎</div>
+        <p>Drag & drop or <u>browse</u></p>
+        <div class="filename" id="filename"></div>
+      </div>
+      <div id="preview-wrap">
+        <img id="preview-img" style="display:none" />
+        <video id="preview-vid" style="display:none" controls></video>
+      </div>
+    </div>
+
+    <button class="btn" id="uploadBtn">Upload Post</button>
+    <p id="status"></p>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:5001/api";
+
+    /* ── Auth helpers ── */
+    function getToken() {
+      return localStorage.getItem("token");
+    }
+
+    function requireAuth() {
+      if (!getToken()) {
+        alert("Please login first");
+        window.location.href = "/login.html";
+        return false;
+      }
+      return true;
+    }
+
+    if (!requireAuth()) throw new Error("No token");
+
+    /* ── File preview ── */
+    const fileInput   = document.getElementById("file");
+    const dropZone    = document.getElementById("dropZone");
+    const filenameEl  = document.getElementById("filename");
+    const previewWrap = document.getElementById("preview-wrap");
+    const previewImg  = document.getElementById("preview-img");
+    const previewVid  = document.getElementById("preview-vid");
+
+    fileInput.addEventListener("change", () => handleFile(fileInput.files[0]));
+
+    dropZone.addEventListener("dragover",  e => { e.preventDefault(); dropZone.classList.add("drag-over"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("drag-over"));
+    dropZone.addEventListener("drop", e => {
+      e.preventDefault();
+      dropZone.classList.remove("drag-over");
+      const f = e.dataTransfer.files[0];
+      if (f) { fileInput.files = e.dataTransfer.files; handleFile(f); }
+    });
+
+    function handleFile(file) {
+      if (!file) return;
+      filenameEl.textContent = file.name;
+      previewWrap.style.display = "block";
+      const url = URL.createObjectURL(file);
+
+      if (file.type.startsWith("video/")) {
+        previewImg.style.display = "none";
+        previewVid.style.display = "block";
+        previewVid.src = url;
+      } else {
+        previewVid.style.display = "none";
+        previewImg.style.display = "block";
+        previewImg.src = url;
+      }
+    }
+
+    /* ── Upload ── */
+    const uploadBtn = document.getElementById("uploadBtn");
+    const statusEl  = document.getElementById("status");
+    const captionEl = document.getElementById("caption");
+
+    function setStatus(msg, type = "") {
+      statusEl.textContent = msg;
+      statusEl.className = type;
+    }
+
+    uploadBtn.addEventListener("click", async () => {
+      const caption = captionEl.value.trim();
+      const file    = fileInput.files[0];
+
+
+
+      uploadBtn.disabled = true;
+      setStatus("Uploading…");
+
+      const formData = new FormData();
+      formData.append("caption", caption);
+      formData.append("file", file);
+
+      try {
+        const res = await fetch(`${API_BASE}/posts`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+          },
+          body: formData,
+        });
+
+        const ct   = res.headers.get("content-type") || "";
+        let   data;
+
+        if (ct.includes("application/json")) {
+          data = await res.json();
+        } else {
+          const text = await res.text();
+          console.error("Non-JSON response:", text);
+          throw new Error("Server error (non-JSON response)");
+        }
+
+        if (!res.ok) throw new Error(data?.message || "Upload failed");
+
+        setStatus("✅ Post uploaded successfully! Redirecting…", "ok");
+        captionEl.value        = "";
+        fileInput.value        = "";
+        filenameEl.textContent = "";
+        previewWrap.style.display = "none";
+        previewImg.src         = "";
+        previewVid.src         = "";
+
+        // Redirect back to feed after successful post
+        setTimeout(() => {
+          window.location.href = "display.html";
+        }, 700);
+
+      } catch (err) {
+        console.error("Upload error:", err);
+        setStatus("❌ " + (err.message || "Unknown error"), "err");
+      } finally {
+        uploadBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

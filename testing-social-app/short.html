@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Shorts</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:    #ff2d55;
+      --cyan:   #00f5d4;
+      --bg:     #000;
+      --glass:  rgba(0,0,0,.55);
+      --text:   #fff;
+      --muted:  rgba(255,255,255,.5);
+      --panel:  rgba(15,15,15,.96);
+    }
+
+    html, body {
+      height: 100%; width: 100%;
+      background: #111;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ───────── DESKTOP SHELL ───────── */
+    #app-shell {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      height: 100vh;
+      background: #111;
+    }
+
+    /* ───────── FEED SCROLLER ───────── */
+    #feed {
+      height: 100vh;
+      width: 100%;
+      max-width: 420px;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+      position: relative;
+      background: var(--bg);
+      box-shadow: 0 0 80px rgba(0,0,0,.9);
+    }
+    #feed::-webkit-scrollbar { display: none; }
+
+    /* ───────── SINGLE VIDEO CARD ───────── */
+    .reel {
+      position: relative;
+      height: 100vh;
+      width: 100%;
+      scroll-snap-align: start;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+    }
+
+    .reel video {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    /* ───────── MOBILE: full bleed ───────── */
+    @media (max-width: 480px) {
+      #app-shell { background: var(--bg); }
+      #feed { max-width: 100%; box-shadow: none; }
+    }
+
+    /* gradient overlay */
+    .reel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        rgba(0,0,0,.85) 0%,
+        rgba(0,0,0,.3) 40%,
+        transparent 70%
+      );
+      pointer-events: none;
+    }
+
+    /* ───────── BOTTOM INFO ───────── */
+    .info {
+      position: relative;
+      z-index: 2;
+      padding: 0 70px 40px 20px;
+      flex: 1;
+    }
+
+    .info .username {
+      font-weight: 800;
+      font-size: 16px;
+      margin-bottom: 6px;
+      text-shadow: 0 1px 6px rgba(0,0,0,.6);
+    }
+
+    .info .caption {
+      font-size: 14px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 400;
+      color: rgba(255,255,255,.88);
+      max-width: 75vw;
+      line-height: 1.5;
+      text-shadow: 0 1px 4px rgba(0,0,0,.5);
+    }
+
+    .views-badge {
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ───────── SIDE ACTION BUTTONS ───────── */
+    .actions {
+      position: absolute;
+      right: 12px;
+      bottom: 100px;
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+    }
+
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .action-btn .icon-wrap {
+      width: 46px; height: 46px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      transition: transform .15s, background .2s;
+      backdrop-filter: blur(6px);
+    }
+    .action-btn:active .icon-wrap { transform: scale(.88); }
+    .action-btn.liked .icon-wrap  {
+      background: rgba(255,45,85,.2);
+      border-color: var(--red);
+    }
+
+    .action-btn .count {
+      font-family: 'Space Mono', monospace;
+      font-size: 11px;
+      color: rgba(255,255,255,.8);
+      letter-spacing: -.03em;
+    }
+
+    /* ───────── TOP NAV ───────── */
+    nav {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 18px 10px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.6), transparent);
+    }
+    #app-shell { position: relative; }
+
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      letter-spacing: -.04em;
+      color: var(--text);
+    }
+    .nav-logo span { color: var(--red); }
+
+    .nav-upload-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--red);
+      border: none;
+      border-radius: 20px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: opacity .2s;
+    }
+    .nav-upload-btn:hover { opacity: .85; }
+
+    /* ───────── UPLOAD PANEL ───────── */
+    .panel-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      z-index: 100;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .panel-overlay.open { display: flex; }
+    .panel-overlay .panel {
+      max-width: 420px;
+      width: 100%;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: 22px 22px 0 0;
+      width: 100%;
+      padding: 24px 22px 40px;
+      animation: slideUp .3s ease;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(100%); }
+      to   { transform: translateY(0); }
+    }
+
+    .panel h3 {
+      font-weight: 800;
+      font-size: 18px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-close {
+      background: rgba(255,255,255,.08);
+      border: none;
+      color: #fff;
+      width: 30px; height: 30px;
+      border-radius: 50%;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .drop-zone {
+      border: 2px dashed rgba(255,255,255,.2);
+      border-radius: 14px;
+      padding: 30px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .2s, background .2s;
+      position: relative;
+      margin-bottom: 14px;
+    }
+    .drop-zone:hover { border-color: var(--red); background: rgba(255,45,85,.06); }
+    .drop-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .drop-zone .dz-icon { font-size: 34px; margin-bottom: 8px; }
+    .drop-zone p { font-size: 13px; color: var(--muted); }
+    .drop-zone .dz-name { font-size: 13px; color: var(--cyan); margin-top: 6px; font-family: 'Space Mono', monospace; }
+
+    .panel input[type="text"],
+    .panel textarea {
+      width: 100%;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      outline: none;
+      margin-bottom: 12px;
+      resize: none;
+      transition: border-color .2s;
+    }
+    .panel input[type="text"]:focus,
+    .panel textarea:focus { border-color: var(--red); }
+
+    .upload-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--red);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: opacity .2s;
+      margin-top: 4px;
+    }
+    .upload-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .upload-btn:hover:not(:disabled) { opacity: .88; }
+
+    #upload-status {
+      margin-top: 10px;
+      font-size: 13px;
+      text-align: center;
+      min-height: 18px;
+    }
+
+    /* ───────── COMMENTS PANEL ───────── */
+    .comments-panel {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+    .comments-panel.open { display: flex; }
+
+    .comments-bg {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,.5);
+    }
+
+    .comments-panel {
+      align-items: center;
+    }
+    .comments-sheet {
+      position: relative;
+      background: var(--panel);
+      border-radius: 22px 22px 0 0;
+      border-top: 1px solid rgba(255,255,255,.08);
+      height: 70vh;
+      width: 100%;
+      max-width: 420px;
+      display: flex;
+      flex-direction: column;
+      animation: slideUp .25s ease;
+    }
+
+    .comments-header {
+      padding: 16px 18px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+      flex-shrink: 0;
+    }
+    .comments-header h4 { font-weight: 700; font-size: 15px; }
+
+    .comments-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      scrollbar-width: none;
+    }
+    .comments-list::-webkit-scrollbar { display: none; }
+
+    .c-item {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .c-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.1);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    .c-body { flex: 1; }
+    .c-user {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+    .c-text { font-size: 14px; color: rgba(255,255,255,.85); line-height: 1.45; }
+    .c-actions {
+      margin-top: 6px;
+      display: flex;
+      gap: 14px;
+    }
+    .c-action-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-size: 12px;
+      font-family: 'Syne', sans-serif;
+      cursor: pointer;
+      padding: 0;
+      transition: color .15s;
+    }
+    .c-action-btn:hover { color: #fff; }
+    .c-action-btn.del:hover { color: var(--red); }
+
+    /* replies */
+    .replies-wrap {
+      margin-top: 8px;
+      margin-left: 2px;
+      border-left: 2px solid rgba(255,255,255,.07);
+      padding-left: 12px;
+    }
+    .r-item {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .r-avatar {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.08);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+    }
+    .r-body .c-user { font-size: 12px; }
+    .r-body .c-text { font-size: 13px; }
+
+    /* reply input inline */
+    .reply-input-wrap {
+      display: none;
+      margin-top: 8px;
+      gap: 8px;
+      align-items: center;
+    }
+    .reply-input-wrap.open { display: flex; }
+    .reply-input-wrap input {
+      flex: 1;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 20px;
+      padding: 7px 12px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-size: 13px;
+      outline: none;
+    }
+    .reply-input-wrap button {
+      background: var(--red);
+      border: none;
+      border-radius: 20px;
+      padding: 7px 14px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* comment input bar */
+    .comment-input-bar {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,.07);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .comment-input-bar input {
+      flex: 1;
+      background: rgba(255,255,255,.07);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 22px;
+      padding: 10px 16px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-size: 14px;
+      outline: none;
+    }
+    .comment-input-bar input:focus { border-color: var(--red); }
+    .comment-input-bar button {
+      background: var(--red);
+      border: none;
+      border-radius: 22px;
+      padding: 10px 18px;
+      color: #fff;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* ───────── LOADING ───────── */
+    .loading-state {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+      color: var(--muted);
+    }
+    .spin {
+      width: 36px; height: 36px;
+      border: 3px solid rgba(255,255,255,.1);
+      border-top-color: var(--red);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ───────── PAUSE INDICATOR ───────── */
+    .pause-indicator {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%) scale(0);
+      z-index: 5;
+      width: 70px; height: 70px;
+      background: rgba(0,0,0,.5);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      backdrop-filter: blur(4px);
+      transition: transform .12s;
+      pointer-events: none;
+    }
+    .pause-indicator.show { transform: translate(-50%,-50%) scale(1); }
+  </style>
+</head>
+<body>
+
+<div id="app-shell">
+
+<!-- TOP NAV -->
+<nav>
+  <div class="nav-logo">sh<span>✦</span>rts</div>
+  <div style="display:flex; gap:10px; align-items:center;">
+    <button class="nav-upload-btn" id="globalSoundBtn" onclick="toggleGlobalMute()" style="background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.14);">🔇 Sound</button>
+    <button class="nav-upload-btn" onclick="openUpload()">＋ Upload</button>
+  </div>
+</nav>
+
+<!-- FEED -->
+<div id="feed">
+  <div class="loading-state">
+    <div class="spin"></div>
+    <span style="font-size:13px">Loading shorts…</span>
+  </div>
+</div>
+
+</div><!-- /app-shell -->
+
+<!-- UPLOAD PANEL -->
+<div class="panel-overlay" id="uploadOverlay">
+  <div class="panel">
+    <h3>Upload Short <button class="panel-close" onclick="closeUpload()">✕</button></h3>
+    <div class="drop-zone" id="dz">
+      <input type="file" id="videoFile" accept="video/*" onchange="handleFileSelect(this)" />
+      <div class="dz-icon">🎬</div>
+      <p>Tap to pick a video</p>
+      <div class="dz-name" id="dz-name"></div>
+    </div>
+    <input type="text" id="caption" placeholder="Caption…" maxlength="150" />
+    <button class="upload-btn" id="uploadBtn" onclick="uploadVideo()">Post Short</button>
+    <div id="upload-status"></div>
+  </div>
+</div>
+
+<!-- COMMENTS PANEL -->
+<div class="comments-panel" id="commentsPanel">
+  <div class="comments-bg" onclick="closeComments()"></div>
+  <div class="comments-sheet">
+    <div class="comments-header">
+      <h4>Comments <span id="commentCount" style="color:var(--muted);font-weight:400;font-size:13px"></span></h4>
+      <button class="panel-close" onclick="closeComments()">✕</button>
+    </div>
+    <div class="comments-list" id="commentsList"></div>
+    <div class="comment-input-bar">
+      <input id="commentInput" placeholder="Add comment…" />
+      <button onclick="postComment()">Post</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_VIDEO   = "http://localhost:5001/api/shorts/video";
+const API_LIKES   = "http://localhost:5001/api/shorts/likes";
+const API_COMMENTS = "http://localhost:5001/api/shorts/comments";
+let   token  = () => localStorage.getItem("token") || "";
+let   viewed = new Set();
+
+// Global sound state (autoplay requires muted=true by default in most browsers)
+let globalMuted = (localStorage.getItem("shorts_globalMuted") ?? "true") === "true";
+
+/* active video for comments */
+let activeVideoId = null;
+
+/* ─── AUTH HEADER ─── */
+function authHeader(extra = {}) {
+  return {
+    Authorization: `Bearer ${token()}`,
+    ...extra
+  };
+}
+
+/* ─── OPEN / CLOSE UPLOAD ─── */
+function openUpload()  { document.getElementById("uploadOverlay").classList.add("open"); }
+function closeUpload() { document.getElementById("uploadOverlay").classList.remove("open"); }
+
+function handleFileSelect(input) {
+  const f = input.files[0];
+  document.getElementById("dz-name").textContent = f ? f.name : "";
+}
+
+/* ─── UPLOAD VIDEO ─── */
+async function uploadVideo() {
+  const file    = document.getElementById("videoFile").files[0];
+  const caption = document.getElementById("caption").value.trim();
+  const btn     = document.getElementById("uploadBtn");
+  const status  = document.getElementById("upload-status");
+
+  if (!file) { status.textContent = "⚠️ Pick a video first."; return; }
+
+  const form = new FormData();
+  form.append("video", file);
+  form.append("caption", caption);
+
+  btn.disabled    = true;
+  status.textContent = "Uploading…";
+
+  try {
+    const res  = await fetch(`${API_VIDEO}/createshort`, {
+      method: "POST",
+      headers: authHeader(),
+      body: form
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.message || "Upload failed");
+
+    status.textContent = "✅ Posted!";
+    document.getElementById("caption").value = "";
+    document.getElementById("videoFile").value = "";
+    document.getElementById("dz-name").textContent = "";
+
+    setTimeout(() => { closeUpload(); status.textContent = ""; loadFeed(); }, 900);
+  } catch (e) {
+    status.textContent = "❌ " + e.message;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+/* ─── LOAD FEED ─── */
+async function loadFeed() {
+  const feedEl = document.getElementById("feed");
+  feedEl.innerHTML = `<div class="loading-state"><div class="spin"></div></div>`;
+
+  try {
+    const res  = await fetch(`${API_VIDEO}/getallshorts`, { headers: authHeader() });
+    const data = await res.json();
+
+    feedEl.innerHTML = "";
+
+    if (!data.videos?.length) {
+      feedEl.innerHTML = `<div class="loading-state" style="font-size:15px">No shorts yet 👀</div>`;
+      return;
+    }
+
+    data.videos.forEach((v, i) => {
+      feedEl.appendChild(buildReel(v, i));
+    });
+
+  } catch (e) {
+    feedEl.innerHTML = `<div class="loading-state">❌ ${e.message}</div>`;
+  }
+}
+
+/* ─── BUILD REEL CARD ─── */
+function buildReel(v, idx) {
+  const wrap = document.createElement("div");
+  wrap.className = "reel";
+  wrap.dataset.id = v._id;
+
+  wrap.innerHTML = `
+    <video
+      id="vid-${v._id}"
+      src="${v.videoUrl}"
+      muted loop playsinline
+      preload="${idx === 0 ? 'auto' : 'none'}"
+    ></video>
+
+    <div class="pause-indicator" id="pause-${v._id}">⏸</div>
+
+    <div class="info">
+      <div class="username">@${v.userId?.userName || "unknown"}</div>
+      <div class="caption">${v.caption || ""}</div>
+      <div class="views-badge">👁️ <span id="views-${v._id}">${v.views || 0}</span> views</div>
+    </div>
+
+    <div class="actions">
+      <div class="action-btn ${v.liked ? 'liked' : ''}" id="like-btn-${v._id}" onclick="toggleLike('${v._id}')">
+        <div class="icon-wrap">❤️</div>
+        <div class="count" id="like-count-${v._id}">${v.likeCount || 0}</div>
+      </div>
+
+      <div class="action-btn" onclick="openComments('${v._id}')">
+        <div class="icon-wrap">💬</div>
+        <div class="count" id="cmt-count-${v._id}">0</div>
+      </div>
+
+      <div class="action-btn" id="sound-btn-${v._id}" onclick="toggleMute('${v._id}')">
+        <div class="icon-wrap" id="sound-ic-${v._id}">🔇</div>
+        <div class="count" id="sound-txt-${v._id}">Sound</div>
+      </div>
+    </div>
+  `;
+
+  /* tap to pause / play */
+  const vid = wrap.querySelector(`#vid-${v._id}`);
+  const pauseInd = wrap.querySelector(`#pause-${v._id}`);
+
+  // Ensure this reel matches the global sound setting
+  vid.muted = globalMuted;
+  if (!globalMuted && (!vid.volume || vid.volume === 0)) vid.volume = 1;
+  updateSoundIconsForVideo(v._id);
+
+  wrap.addEventListener("click", (e) => {
+    if (e.target.closest(".actions") || e.target.closest(".info")) return;
+    // If the user taps the reel, treat it as a gesture to enable audio too.
+    if (globalMuted) setGlobalMuted(false);
+    if (vid.paused) { vid.play().catch(() => {}); showPauseIndicator(pauseInd, "▶"); }
+    else            { vid.pause(); showPauseIndicator(pauseInd, "⏸"); }
+  });
+
+  /* view tracking */
+  vid.addEventListener("play", () => {
+    if (viewed.has(v._id)) return;
+    viewed.add(v._id);
+    fetch(`${API_VIDEO}/short/${v._id}/viewshort`, { method: "POST", headers: authHeader() })
+      .then(() => {
+        const el = document.getElementById(`views-${v._id}`);
+        if (el) el.textContent = parseInt(el.textContent) + 1;
+      }).catch(() => {});
+  });
+
+  /* like status check */
+  checkLikeStatus(v._id);
+  fetchCommentCount(v._id);
+
+  return wrap;
+}
+
+function updateGlobalSoundButton() {
+  const btn = document.getElementById("globalSoundBtn");
+  if (!btn) return;
+  btn.textContent = globalMuted ? "🔇 Sound" : "🔊 Sound";
+}
+
+function updateSoundIconsForVideo(videoId) {
+  const ic = document.getElementById(`sound-ic-${videoId}`);
+  if (ic) ic.textContent = globalMuted ? "🔇" : "🔊";
+}
+
+function applyGlobalMuteToAll() {
+  document.querySelectorAll("#feed video").forEach((vid) => {
+    vid.muted = globalMuted;
+    if (!globalMuted && (!vid.volume || vid.volume === 0)) vid.volume = 1;
+  });
+  document.querySelectorAll('[id^="sound-ic-"]').forEach((el) => {
+    el.textContent = globalMuted ? "🔇" : "🔊";
+  });
+  updateGlobalSoundButton();
+}
+
+function setGlobalMuted(muted) {
+  globalMuted = !!muted;
+  localStorage.setItem("shorts_globalMuted", String(globalMuted));
+  applyGlobalMuteToAll();
+}
+
+function toggleGlobalMute() {
+  setGlobalMuted(!globalMuted);
+
+  // If enabling sound, try to play the currently visible reel (gesture: button click).
+  if (!globalMuted) {
+    const visible = [...document.querySelectorAll(".reel")].find((r) => {
+      const rect = r.getBoundingClientRect();
+      const mid = window.innerHeight / 2;
+      return rect.top <= mid && rect.bottom >= mid;
+    });
+    const vid = visible?.querySelector("video");
+    vid?.play?.().catch(() => {});
+  }
+}
+
+// Back-compat: per-reel sound button now toggles global sound (one click for all)
+function toggleMute(_videoId) {
+  toggleGlobalMute();
+}
+
+function showPauseIndicator(el, icon) {
+  el.textContent = icon;
+  el.classList.add("show");
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove("show"), 600);
+}
+
+/* ─── INTERSECTION OBSERVER: autoplay ─── */
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    const vid = entry.target.querySelector("video");
+    if (!vid) return;
+    if (entry.isIntersecting) {
+      // Keep newly-intersecting videos aligned with global sound setting
+      vid.muted = globalMuted;
+      vid.play().catch(() => {});
+    } else {
+      vid.pause();
+    }
+  });
+}, { threshold: 0.7 });
+
+/* observe new reels */
+const feedObserver = new MutationObserver(mutations => {
+  mutations.forEach(m => {
+    m.addedNodes.forEach(node => {
+      if (node.classList?.contains("reel")) observer.observe(node);
+    });
+  });
+});
+feedObserver.observe(document.getElementById("feed"), { childList: true });
+
+/* ─── LIKE STATUS ─── */
+async function checkLikeStatus(videoId) {
+  try {
+    const res  = await fetch(`${API_LIKES}/${videoId}/shortlike-status`, { headers: authHeader() });
+    const data = await res.json();
+    const btn  = document.getElementById(`like-btn-${videoId}`);
+    if (btn) btn.classList.toggle("liked", !!data.liked);
+  } catch {}
+}
+
+/* ─── TOGGLE LIKE ─── */
+async function toggleLike(videoId) {
+  const btn      = document.getElementById(`like-btn-${videoId}`);
+  const countEl  = document.getElementById(`like-count-${videoId}`);
+
+  try {
+    const res  = await fetch(`${API_LIKES}/${videoId}/likeshort`, {
+      method: "POST",
+      headers: authHeader()
+    });
+    const data = await res.json();
+
+    const isLiked = data.liked ?? !btn.classList.contains("liked");
+    btn.classList.toggle("liked", isLiked);
+
+    /* optimistic count */
+    const cur = parseInt(countEl.textContent) || 0;
+    countEl.textContent = isLiked ? cur + 1 : Math.max(0, cur - 1);
+
+    /* bounce */
+    btn.querySelector(".icon-wrap").style.transform = "scale(1.4)";
+    setTimeout(() => btn.querySelector(".icon-wrap").style.transform = "", 200);
+
+  } catch (e) {
+    console.error("Like error:", e);
+  }
+}
+
+/* ─── OPEN COMMENTS ─── */
+async function openComments(videoId) {
+  activeVideoId = videoId;
+  document.getElementById("commentsPanel").classList.add("open");
+  document.getElementById("commentInput").value = "";
+  await renderComments(videoId);
+}
+
+function closeComments() {
+  document.getElementById("commentsPanel").classList.remove("open");
+  activeVideoId = null;
+}
+
+/* ─── FETCH & RENDER COMMENTS ─── */
+async function renderComments(videoId) {
+  const list = document.getElementById("commentsList");
+  list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Loading…</div>`;
+
+  try {
+    const res  = await fetch(`${API_COMMENTS}/${videoId}`, { headers: authHeader() });
+    const data = await res.json();
+    const comments = data.comments || [];
+
+    document.getElementById("commentCount").textContent = `(${comments.length})`;
+    updateCommentCount(videoId, comments.length);
+    list.innerHTML = "";
+
+    if (!comments.length) {
+      list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--muted);font-size:14px">No comments yet.<br>Be the first! 🎤</div>`;
+      return;
+    }
+
+    comments.forEach(c => list.appendChild(buildComment(c, videoId)));
+  } catch (e) {
+    list.innerHTML = `<div style="padding:20px;color:var(--muted)">Failed to load comments.</div>`;
+  }
+}
+
+function updateCommentCount(videoId, count) {
+  const el = document.getElementById(`cmt-count-${videoId}`);
+  if (el) el.textContent = count;
+}
+
+function fetchCommentCount(videoId) {
+  fetch(`${API_COMMENTS}/${videoId}`, { headers: authHeader() })
+    .then(r => r.json())
+    .then(d => updateCommentCount(videoId, (d.comments || []).length))
+    .catch(() => {});
+}
+
+/* ─── BUILD COMMENT ELEMENT ─── */
+function buildComment(c, videoId) {
+  const wrap = document.createElement("div");
+  wrap.className = "c-item";
+  wrap.id = `c-${c._id}`;
+
+  const repliesHTML = (c.replies || []).map(r => `
+    <div class="r-item">
+      <div class="r-avatar">👤</div>
+      <div class="r-body">
+        <div class="c-user">@${r.userId?.userName || "user"}</div>
+        <div class="c-text">${r.text}</div>
+      </div>
+    </div>
+  `).join("");
+
+  wrap.innerHTML = `
+    <div class="c-avatar">👤</div>
+    <div class="c-body">
+      <div class="c-user">@${c.userId?.userName || "user"}</div>
+      <div class="c-text">${c.text}</div>
+      <div class="c-actions">
+        <button class="c-action-btn reply-toggle-btn">↩ Reply</button>
+        <button class="c-action-btn edit-btn">✏️ Edit</button>
+        <button class="c-action-btn del" data-id="${c._id}">✕ Delete</button>
+      </div>
+      <div class="reply-input-wrap" id="ri-${c._id}">
+        <input placeholder="Write a reply…" />
+        <button>Send</button>
+      </div>
+      ${repliesHTML ? `<div class="replies-wrap">${repliesHTML}</div>` : ""}
+    </div>
+  `;
+
+  /* reply — disabled until backend route is uncommented */
+
+  /* reply toggle */
+  wrap.querySelector(".reply-toggle-btn").addEventListener("click", () => {
+    const riWrap = document.getElementById(`ri-${c._id}`);
+    riWrap.classList.toggle("open");
+    if (riWrap.classList.contains("open")) riWrap.querySelector("input").focus();
+  });
+
+  /* send reply */
+  wrap.querySelector(`#ri-${c._id} button`).addEventListener("click", async () => {
+    const input = wrap.querySelector(`#ri-${c._id} input`);
+    const text  = input.value.trim();
+    if (!text) return;
+
+    try {
+      const res = await fetch(`${API_COMMENTS}/${c._id}/reply`, {
+        method: "POST",
+        headers: authHeader({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ text })
+      });
+      if (!res.ok) throw new Error();
+      input.value = "";
+      renderComments(videoId);
+    } catch { alert("Failed to reply."); }
+  });
+
+  /* edit */
+  wrap.querySelector(".edit-btn").addEventListener("click", async () => {
+    const current = wrap.querySelector(".c-text").textContent;
+    const newText = prompt("Edit comment:", current);
+    if (!newText || newText === current) return;
+
+    try {
+      const res = await fetch(`${API_COMMENTS}/${c._id}`, {
+        method: "PUT",
+        headers: authHeader({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ text: newText })
+      });
+      if (!res.ok) throw new Error();
+      renderComments(videoId);
+    } catch { alert("Failed to edit."); }
+  });
+
+  /* delete */
+  wrap.querySelector(".del").addEventListener("click", async () => {
+    if (!confirm("Delete this comment?")) return;
+    try {
+      const res = await fetch(`${API_COMMENTS}/${c._id}`, {
+        method: "DELETE",
+        headers: authHeader()
+      });
+      if (!res.ok) throw new Error();
+      renderComments(videoId);
+    } catch { alert("Failed to delete."); }
+  });
+
+  return wrap;
+}
+
+/* ─── POST COMMENT ─── */
+async function postComment() {
+  if (!activeVideoId) return;
+  const input = document.getElementById("commentInput");
+  const text  = input.value.trim();
+  if (!text) return;
+
+  try {
+    const res = await fetch(`${API_COMMENTS}/${activeVideoId}`, {
+      method: "POST",
+      headers: authHeader({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ text })
+    });
+    if (!res.ok) throw new Error("Failed to post");
+    input.value = "";
+    renderComments(activeVideoId);
+  } catch (e) {
+    alert(e.message);
+  }
+}
+
+/* enter key for comment */
+document.getElementById("commentInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") postComment();
+});
+
+/* ─── INIT ─── */
+updateGlobalSoundButton();
+loadFeed();
+</script>
+</body>
+</html>
