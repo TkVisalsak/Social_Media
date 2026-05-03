@@ -161,3 +161,36 @@ export const updateProfile = async (req, res) => {
 export const checkAuth = (req, res) => {
   res.json(req.user);
 };
+export const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id).select("-password");
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error in getUserById:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+export const getMe = async (req, res) => {
+  try {
+    // req.user is already set by your auth middleware
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    res.status(200).json({
+      user,
+    });
+  } catch (error) {
+    console.error("Error in getMe:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

@@ -29,7 +29,7 @@ const commentSchema = new mongoose.Schema(
       index: true,
     },
 
-    replyCount: {
+    commentCount: {
       type: Number,
       default: 0,
     },

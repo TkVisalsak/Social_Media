@@ -14,7 +14,7 @@ import authRoutes from "./routes/authRoute/auth.route.js";
 //messages
 import messageRoutes from "./routes/messageRoute/message.route.js";
 // posts
-import postRoutes from "./routes/post/post.route.js";
+import feedRoutes from "./routes/post/post.route.js";
 import likeRoutes from "./routes/post/like.route.js";
 import commentRoutes from "./routes/post/comment.route.js";
 //shorts video
@@ -61,7 +61,7 @@ app.use("/api/auth", authRoutes);
 //message routes
 app.use("/api/messages", messageRoutes);
 //post routes
-app.use("/api/posts", postRoutes);
+app.use("/api/feeds", feedRoutes);
 app.use("/api/likes", likeRoutes); 
 app.use("/api/comments", commentRoutes);
 //short video  

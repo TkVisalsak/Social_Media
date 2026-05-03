@@ -48,26 +48,27 @@ export const createPost = TryCatch(async (req, res) => {
 
 //get posts
 export const getFeedPosts = TryCatch(async (req, res) => {
-  const page = Number(req.query.page) || 0;
-  const limit = 10;
+const page = Number(req.query.page) || 1;
+const limit = Number(req.query.limit) || 10;
 
-  const posts = await Post.find()
-    .sort({ createdAt: -1 })
-    .limit(limit)
-    .skip(page * limit)
-    .populate("userId", "username avatar");
+const posts = await Post.find()
+  .sort({ createdAt: -1 })
+  .limit(limit)
+  .skip((page - 1) * limit)
+  .populate("userId", "userName avatar");
 
-  res.json({
-    posts,
-    page,
-  });
+res.json({
+  posts,
+  page,
+  limit
+});
 });
 
 
 export const getPostById = TryCatch(async (req, res) => {
   const post = await Post.findById(req.params.id).populate(
     "userId",
-    "username avatar"
+    "userName avatar"
   );
 
   if (!post) {

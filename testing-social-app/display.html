@@ -337,6 +337,17 @@
     async function api(url, options = {}) {
       const token = getToken();
 
+      console.log("📤 API Request:", {
+        url: API_BASE + url,
+        method: options.method || "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(options.headers || {}),
+        },
+        body: options.body ? JSON.parse(options.body) : null,
+      });
+
       const res = await fetch(API_BASE + url, {
         ...options,
         headers: {
@@ -347,6 +358,14 @@
       });
 
       const data = await res.json().catch(() => null);
+      
+      console.log("📥 API Response:", {
+        url: API_BASE + url,
+        status: res.status,
+        ok: res.ok,
+        data: data,
+      });
+
       if (!res.ok) throw new Error(data?.message || "Request failed");
       return data;
     }
@@ -498,7 +517,7 @@
       const feedEl = document.getElementById("feed");
 
       try {
-        const data = await api("/posts");
+        const data = await api("/feeds");
         feedEl.innerHTML = "";
 
         if (!data.posts?.length) {

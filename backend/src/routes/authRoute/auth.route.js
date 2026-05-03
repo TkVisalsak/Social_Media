@@ -7,6 +7,8 @@ import {
   signup,
   updateProfile,
   personal_info,
+  getUserById,
+  getMe,
 } from "../../controllers/authController/auth.controller.js";
 import {
   getUserProfile,
@@ -26,6 +28,8 @@ router.post("/login", login);
 router.post("/logout", logout);
 router.post("/personal_info", protectRoute, personal_info);
 router.put("/update-profile", protectRoute, updateProfile);
+router.get("/user/:id", getUserById);
+router.get("/me", protectRoute, getMe);
 
 router.get("/check", protectRoute, checkAuth);
 router.get("/getUserEmail", protectRoute, getUserEmail);

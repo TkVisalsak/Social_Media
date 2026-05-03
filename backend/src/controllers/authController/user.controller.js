@@ -17,3 +17,20 @@ export const deleteMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+export const getMe = async (req, res) => {
+  try {
+    // req.user is already set by your auth middleware
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    res.status(200).json({
+      user,
+    });
+  } catch (error) {
+    console.error("Error in getMe:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

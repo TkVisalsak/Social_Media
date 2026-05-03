@@ -21,7 +21,7 @@ export const createComment = TryCatch(async (req, res) => {
     });
   }
 
-  // 🔒 Validate parent (only 1-level replies allowed)
+  
   if (parentId) {
     const parent = await Comment.findById(parentId);
 
@@ -39,10 +39,10 @@ export const createComment = TryCatch(async (req, res) => {
     parentId: parentId || null,
   });
 
-  // 🔥 update reply count
+  
   if (parentId) {
     await Comment.findByIdAndUpdate(parentId, {
-      $inc: { replyCount: 1 },
+      $inc: { commentCount: 1 },
     });
   }
 
