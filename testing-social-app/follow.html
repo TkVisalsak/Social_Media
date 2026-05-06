@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Follow API Tester</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080810;
+    --s1: #0f0f1a;
+    --s2: #161625;
+    --s3: #1e1e30;
+    --border: #252538;
+    --border2: #32324a;
+    --text: #ddddf5;
+    --muted: #5a5a80;
+    --muted2: #8888aa;
+    --accent: #7b6cff;
+    --accent-g: #a08bff;
+    --green: #3ecf8e;
+    --red: #f56060;
+    --yellow: #f5c842;
+    --cyan: #38bdf8;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    min-height: 100vh;
+  }
+
+  /* noise overlay */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 32px 20px;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* ── PAGE TITLE ── */
+  .page-title {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 4px;
+  }
+
+  .page-title h1 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .page-title .pill {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: rgba(123,108,255,0.15);
+    color: var(--accent-g);
+    border: 1px solid rgba(123,108,255,0.25);
+    letter-spacing: 0.08em;
+  }
+
+  /* ── CONFIG PANEL ── */
+  .config-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: sticky;
+    top: 20px;
+  }
+
+  .card {
+    background: var(--s1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .card-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .card-title {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted2);
+  }
+
+  .card-body { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+
+  /* login banner */
+  .login-banner {
+    grid-column: 1 / -1;
+    background: var(--s1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .login-banner-body {
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+  }
+  .login-field label { margin-bottom: 5px; }
+  .token-display {
+    background: var(--s3);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 11px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--green);
+    word-break: break-all;
+    max-height: 60px;
+    overflow: hidden;
+    display: none;
+  }
+  .token-display.show { display: block; }
+
+  label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  input, select {
+    width: 100%;
+    background: var(--s3);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 8px 11px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+  input::placeholder { color: var(--muted); }
+
+  button {
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 14px;
+    border-radius: 7px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.14s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    justify-content: center;
+  }
+  button:hover { background: var(--s3); border-color: var(--border2); }
+  button:active { transform: scale(0.97); }
+
+  .btn-accent {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-accent:hover { opacity: 0.88; background: var(--accent); }
+
+  .btn-red {
+    background: rgba(245,96,96,0.12);
+    border-color: rgba(245,96,96,0.3);
+    color: var(--red);
+  }
+  .btn-red:hover { background: rgba(245,96,96,0.2); }
+
+  .btn-green {
+    background: rgba(62,207,142,0.12);
+    border-color: rgba(62,207,142,0.3);
+    color: var(--green);
+  }
+  .btn-green:hover { background: rgba(62,207,142,0.2); }
+
+  .btn-cyan {
+    background: rgba(56,189,248,0.1);
+    border-color: rgba(56,189,248,0.25);
+    color: var(--cyan);
+  }
+  .btn-cyan:hover { background: rgba(56,189,248,0.18); }
+
+  .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+  /* conn status */
+  .conn-row {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .conn-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+    transition: background 0.3s;
+  }
+  .conn-dot.ok  { background: var(--green); box-shadow: 0 0 5px var(--green); }
+  .conn-dot.err { background: var(--red); }
+
+  /* ── ENDPOINTS ── */
+  .endpoints { display: flex; flex-direction: column; gap: 14px; }
+
+  .endpoint-card {
+    background: var(--s1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .endpoint-card:hover { border-color: var(--border2); }
+
+  .ep-header {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .method-badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    min-width: 44px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .m-post { background: rgba(62,207,142,0.12); color: var(--green); border: 1px solid rgba(62,207,142,0.2); }
+  .m-get  { background: rgba(56,189,248,0.1);  color: var(--cyan);  border: 1px solid rgba(56,189,248,0.2); }
+  .m-del  { background: rgba(245,96,96,0.1);   color: var(--red);   border: 1px solid rgba(245,96,96,0.2); }
+
+  .ep-path {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted2);
+    flex: 1;
+  }
+
+  .ep-desc {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .ep-status {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    flex-shrink: 0;
+  }
+  .ep-status.ok  { background: rgba(62,207,142,0.12); color: var(--green); }
+  .ep-status.err { background: rgba(245,96,96,0.12);  color: var(--red); }
+  .ep-status.idle{ background: var(--s3); color: var(--muted); }
+
+  .ep-body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .ep-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ep-fields.single { grid-template-columns: 1fr; }
+
+  .send-row { display: flex; gap: 8px; align-items: center; }
+  .send-row button { width: auto; flex: 1; }
+
+  /* response */
+  .res-box {
+    background: var(--s2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .res-bar {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    background-size: 200%;
+    animation: shimmer 0.9s infinite;
+    display: none;
+  }
+  .res-bar.active { display: block; }
+  @keyframes shimmer { 0%{background-position:100%} 100%{background-position:-100%} }
+
+  .res-pre {
+    padding: 12px 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.75;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+    color: var(--text);
+  }
+
+  /* json highlight */
+  .jk { color: var(--accent-g); }
+  .js { color: var(--green); }
+  .jn { color: var(--yellow); }
+  .jb { color: var(--cyan); }
+  .jx { color: var(--red); }
+
+  /* ── FOLLOW GRAPH ── */
+  .graph-section {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+  }
+
+  .graph-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 12px;
+  }
+
+  .user-list { display: flex; flex-direction: column; gap: 6px; min-height: 60px; }
+
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 10px;
+    background: var(--s2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    transition: border-color 0.12s;
+  }
+  .user-chip:hover { border-color: var(--border2); }
+
+  .chip-avatar {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    background: var(--s3);
+    border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-g);
+    flex-shrink: 0;
+  }
+
+  .chip-name { font-size: 13px; font-weight: 500; }
+  .chip-id   { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-top: 1px; }
+
+  .chip-right { margin-left: auto; }
+
+  .chip-btn {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 3px 9px;
+    border-radius: 5px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    color: var(--muted2);
+    cursor: pointer;
+    width: auto;
+    transition: all 0.12s;
+  }
+  .chip-btn:hover { background: var(--s3); color: var(--text); }
+  .chip-btn.following {
+    background: rgba(62,207,142,0.1);
+    border-color: rgba(62,207,142,0.3);
+    color: var(--green);
+  }
+
+  .empty-list {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    padding: 16px;
+  }
+
+  /* history log */
+  .history-log {
+    grid-column: 1 / -1;
+    background: var(--s1);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .history-entries {
+    padding: 10px 14px;
+    max-height: 160px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .history-entry {
+    font-family: var(--mono);
+    font-size: 11px;
+    display: flex;
+    gap: 10px;
+    line-height: 1.5;
+  }
+
+  .h-time  { color: var(--muted); flex-shrink: 0; }
+  .h-method{ flex-shrink: 0; width: 34px; }
+  .h-path  { color: var(--muted2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .h-code  { flex-shrink: 0; }
+  .h-ok    { color: var(--green); }
+  .h-err   { color: var(--red); }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- LOGIN BANNER -->
+  <div class="login-banner" style="grid-column:1/-1">
+    <div class="card-header">
+      <span class="card-title">Login</span>
+      <div class="conn-row">
+        <div class="conn-dot" id="authDot"></div>
+        <span id="authLabel">not logged in</span>
+      </div>
+    </div>
+    <div class="login-banner-body">
+      <div class="login-field">
+        <label>BASE URL</label>
+        <input id="loginUrl" value="http://localhost:5001/api" oninput="syncUrl()" />
+      </div>
+      <div class="login-field">
+        <label>EMAIL</label>
+        <input id="loginEmail" type="text" placeholder="you@example.com"
+          onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <div class="login-field">
+        <label>PASSWORD</label>
+        <input id="loginPass" type="password" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <button class="btn-accent" id="loginBtn" onclick="doLogin()" style="width:auto;padding:8px 20px;height:36px">
+        Login
+      </button>
+    </div>
+    <div style="padding:0 20px 14px;display:flex;align-items:center;gap:10px">
+      <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">TOKEN</span>
+      <div class="token-display" id="tokenDisplay"></div>
+      <span id="tokenEmpty" style="font-family:var(--mono);font-size:11px;color:var(--muted)">— login to get token automatically —</span>
+    </div>
+  </div>
+
+  <!-- TITLE -->
+  <div class="page-title">
+    <h1>Follow Controller</h1>
+    <span class="pill">API TESTER</span>
+  </div>
+
+  <!-- LEFT: CONFIG -->
+  <div class="config-panel">
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Config</span>
+        <div class="conn-row">
+          <div class="conn-dot" id="connDot"></div>
+          <span id="connLabel">untested</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div>
+          <label>BASE URL</label>
+          <input id="cfgUrl" value="http://localhost:5001/api" placeholder="http://localhost:5001/api" oninput="save();syncUrl()" />
+        </div>
+        <div>
+          <label>YOUR USER ID <span style="color:var(--green);font-size:10px">(auto-filled on login)</span></label>
+          <input id="cfgMyId" placeholder="auto-filled after login" oninput="save()" />
+        </div>
+        <button class="btn-accent" onclick="ping()">Test connection</button>
+        <button onclick="doLogout()" style="color:var(--red);border-color:rgba(245,96,96,0.3)">Logout</button>
+      </div>
+    </div>
+
+    <!-- quick check -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">Quick check</span></div>
+      <div class="card-body">
+        <div>
+          <label>TARGET USER ID</label>
+          <input id="quickId" placeholder="other user's _id" />
+        </div>
+        <button class="btn-green" onclick="quickFollow()">Follow</button>
+        <button class="btn-red"   onclick="quickUnfollow()">Unfollow</button>
+        <button class="btn-cyan"  onclick="quickCheck()">Check if following</button>
+      </div>
+    </div>
+
+    <!-- my stats -->
+    <div class="card">
+      <div class="card-header"><span class="card-title">My stats</span></div>
+      <div class="card-body">
+        <div class="btn-row">
+          <button onclick="myFollowers()">My followers</button>
+          <button onclick="myFollowing()">My following</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:20px;font-weight:600;color:var(--accent-g)" id="statFollowers">—</div>
+            <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px">followers</div>
+          </div>
+          <div style="flex:1;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center">
+            <div style="font-size:20px;font-weight:600;color:var(--cyan)" id="statFollowing">—</div>
+            <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px">following</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: ENDPOINTS -->
+  <div class="endpoints">
+
+    <!-- FOLLOW -->
+    <div class="endpoint-card">
+      <div class="ep-header">
+        <span class="method-badge m-post">POST</span>
+        <span class="ep-path">/follow/<span style="color:var(--yellow)">:userId</span></span>
+        <span class="ep-desc">Follow a user</span>
+        <span class="ep-status idle" id="st-follow">idle</span>
+      </div>
+      <div class="ep-body">
+        <div class="ep-fields single">
+          <div>
+            <label>USER ID TO FOLLOW</label>
+            <input id="f-userId" placeholder="507f1f77bcf86cd799439011" />
+          </div>
+        </div>
+        <div class="send-row">
+          <button class="btn-green" onclick="followUser()">▶ POST /follow/:userId</button>
+        </div>
+        <div class="res-box">
+          <div class="res-bar" id="bar-follow"></div>
+          <div class="res-pre" id="res-follow">// waiting…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UNFOLLOW -->
+    <div class="endpoint-card">
+      <div class="ep-header">
+        <span class="method-badge m-del">DEL</span>
+        <span class="ep-path">/unfollow/<span style="color:var(--yellow)">:userId</span></span>
+        <span class="ep-desc">Unfollow a user</span>
+        <span class="ep-status idle" id="st-unfollow">idle</span>
+      </div>
+      <div class="ep-body">
+        <div class="ep-fields single">
+          <div>
+            <label>USER ID TO UNFOLLOW</label>
+            <input id="uf-userId" placeholder="507f1f77bcf86cd799439011" />
+          </div>
+        </div>
+        <div class="send-row">
+          <button class="btn-red" onclick="unfollowUser()">▶ DEL /unfollow/:userId</button>
+        </div>
+        <div class="res-box">
+          <div class="res-bar" id="bar-unfollow"></div>
+          <div class="res-pre" id="res-unfollow">// waiting…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHECK IF FOLLOWING -->
+    <div class="endpoint-card">
+      <div class="ep-header">
+        <span class="method-badge m-get">GET</span>
+        <span class="ep-path">/follow/check/<span style="color:var(--yellow)">:userId</span></span>
+        <span class="ep-desc">Check follow status</span>
+        <span class="ep-status idle" id="st-check">idle</span>
+      </div>
+      <div class="ep-body">
+        <div class="ep-fields single">
+          <div>
+            <label>TARGET USER ID</label>
+            <input id="ch-userId" placeholder="507f1f77bcf86cd799439011" />
+          </div>
+        </div>
+        <div class="send-row">
+          <button class="btn-cyan" onclick="checkFollowing()">▶ GET /follow/check/:userId</button>
+        </div>
+        <div class="res-box">
+          <div class="res-bar" id="bar-check"></div>
+          <div class="res-pre" id="res-check">// waiting…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET FOLLOWERS -->
+    <div class="endpoint-card">
+      <div class="ep-header">
+        <span class="method-badge m-get">GET</span>
+        <span class="ep-path">/followers/<span style="color:var(--yellow)">:userId</span></span>
+        <span class="ep-desc">Get followers list</span>
+        <span class="ep-status idle" id="st-gf">idle</span>
+      </div>
+      <div class="ep-body">
+        <div class="ep-fields single">
+          <div>
+            <label>USER ID (leave blank for yours)</label>
+            <input id="gf-userId" placeholder="defaults to your ID" />
+          </div>
+        </div>
+        <div class="send-row">
+          <button onclick="getFollowers()">▶ GET /followers/:userId</button>
+        </div>
+        <div class="res-box">
+          <div class="res-bar" id="bar-gf"></div>
+          <div class="res-pre" id="res-gf">// waiting…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET FOLLOWING -->
+    <div class="endpoint-card">
+      <div class="ep-header">
+        <span class="method-badge m-get">GET</span>
+        <span class="ep-path">/following/<span style="color:var(--yellow)">:userId</span></span>
+        <span class="ep-desc">Get following list</span>
+        <span class="ep-status idle" id="st-gg">idle</span>
+      </div>
+      <div class="ep-body">
+        <div class="ep-fields single">
+          <div>
+            <label>USER ID (leave blank for yours)</label>
+            <input id="gg-userId" placeholder="defaults to your ID" />
+          </div>
+        </div>
+        <div class="send-row">
+          <button onclick="getFollowing()">▶ GET /following/:userId</button>
+        </div>
+        <div class="res-box">
+          <div class="res-bar" id="bar-gg"></div>
+          <div class="res-pre" id="res-gg">// waiting…</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOLLOW GRAPH -->
+  <div class="graph-section">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Follow graph</span>
+        <button onclick="refreshGraph()" style="width:auto;padding:4px 12px;font-size:11px">refresh</button>
+      </div>
+      <div class="graph-grid" style="padding:14px">
+        <div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px">FOLLOWERS</div>
+          <div class="user-list" id="graphFollowers">
+            <div class="empty-list">load to see</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px">FOLLOWING</div>
+          <div class="user-list" id="graphFollowing">
+            <div class="empty-list">load to see</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="history-log">
+    <div class="card-header">
+      <span class="card-title">Request history</span>
+      <button onclick="clearHistory()" style="width:auto;padding:4px 10px;font-size:11px;color:var(--muted)">clear</button>
+    </div>
+    <div class="history-entries" id="historyEntries">
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;padding:12px">No requests yet</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ══ STATE ══ */
+let _token = '';
+let _myId  = '';
+
+/* ══ INIT ══ */
+(function init() {
+  const url = localStorage.getItem('fw_url');
+  const tok = localStorage.getItem('fw_tok');
+  const mid = localStorage.getItem('fw_myid');
+  if (url) {
+    document.getElementById('cfgUrl').value   = url;
+    document.getElementById('loginUrl').value = url;
+  }
+  if (mid) document.getElementById('cfgMyId').value = mid;
+  if (tok && mid) {
+    _token = tok;
+    _myId  = mid;
+    setAuthStatus(true, mid);
+  }
+})();
+
+function syncUrl() {
+  const v = document.getElementById('loginUrl').value;
+  document.getElementById('cfgUrl').value = v;
+  save();
+}
+
+function save() {
+  localStorage.setItem('fw_url',   document.getElementById('cfgUrl').value);
+  localStorage.setItem('fw_myid',  document.getElementById('cfgMyId').value);
+}
+
+function setAuthStatus(ok, userId) {
+  const dot = document.getElementById('authDot');
+  const lbl = document.getElementById('authLabel');
+  const td  = document.getElementById('tokenDisplay');
+  const te  = document.getElementById('tokenEmpty');
+  if (ok) {
+    dot.className = 'conn-dot ok';
+    lbl.textContent = 'logged in · ' + String(userId).slice(-8);
+    td.textContent  = _token.slice(0,50) + '…';
+    td.classList.add('show');
+    te.style.display = 'none';
+  } else {
+    dot.className = 'conn-dot err';
+    lbl.textContent = 'not logged in';
+    td.classList.remove('show');
+    te.style.display = '';
+  }
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value.trim();
+  const base  = document.getElementById('loginUrl').value.replace(/\/$/,'');
+  if (!email || !pass) { alert('Enter email and password'); return; }
+  const btn = document.getElementById('loginBtn');
+  btn.textContent = '…'; btn.disabled = true;
+  try {
+    const r = await fetch(base + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const d = await r.json();
+    if (!r.ok) { alert('Login failed: ' + (d.message || r.status)); return; }
+    _token = d.token || d.accessToken || d.data?.token || '';
+    const user = d.user || d.data?.user || d;
+    _myId  = user._id || user.id || '';
+    if (!_token) { alert('No token in response — check your login route returns { token }'); return; }
+    localStorage.setItem('fw_tok',  _token);
+    localStorage.setItem('fw_myid', _myId);
+    localStorage.setItem('fw_url',  base);
+    document.getElementById('cfgMyId').value = _myId;
+    document.getElementById('cfgUrl').value  = base;
+    setAuthStatus(true, _myId);
+    addHistory('POST', '/auth/login', r.status);
+  } catch(e) {
+    alert('Cannot reach server: ' + e.message);
+  } finally {
+    btn.textContent = 'Login'; btn.disabled = false;
+  }
+}
+
+function doLogout() {
+  _token = ''; _myId = '';
+  localStorage.removeItem('fw_tok');
+  localStorage.removeItem('fw_myid');
+  document.getElementById('cfgMyId').value    = '';
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPass').value  = '';
+  setAuthStatus(false);
+}
+
+function base()  { return document.getElementById('cfgUrl').value.replace(/\/$/,''); }
+function myId()  { return _myId || document.getElementById('cfgMyId').value.trim(); }
+function hdrs()  {
+  if (!_token) console.warn('No token — login first');
+  return { Authorization: 'Bearer ' + _token };
+}
+
+function hl(json) {
+  return JSON.stringify(json, null, 2)
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+\.?\d*)/g, m => {
+      if (/^"/.test(m)) return /:$/.test(m) ? `<span class="jk">${m}</span>` : `<span class="js">${m}</span>`;
+      if (/true|false/.test(m)) return `<span class="jb">${m}</span>`;
+      if (/null/.test(m)) return `<span class="jx">${m}</span>`;
+      return `<span class="jn">${m}</span>`;
+    });
+}
+
+function setStatus(id, code) {
+  const el = document.getElementById('st-' + id);
+  if (!el) return;
+  if (code === null) { el.textContent = '…'; el.className = 'ep-status idle'; return; }
+  el.textContent = code;
+  el.className = 'ep-status ' + (code >= 200 && code < 300 ? 'ok' : 'err');
+}
+function setRes(id, data) { document.getElementById('res-' + id).innerHTML = hl(data); }
+function setBar(id, on)   { document.getElementById('bar-' + id).classList.toggle('active', on); }
+function setConn(state)   {
+  document.getElementById('connDot').className   = 'conn-dot ' + (state==='ok'?'ok':state==='err'?'err':'');
+  document.getElementById('connLabel').textContent = state==='ok'?'reachable':state==='err'?'unreachable':'untested';
+}
+
+let historyItems = [];
+function addHistory(method, path, code) {
+  historyItems.unshift({ method, path, code, time: new Date() });
+  if (historyItems.length > 50) historyItems.pop();
+  renderHistory();
+}
+function renderHistory() {
+  const el = document.getElementById('historyEntries');
+  if (!historyItems.length) { el.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center;padding:12px">No requests yet</div>'; return; }
+  const mc = { GET:'var(--cyan)', POST:'var(--green)', DELETE:'var(--red)' };
+  el.innerHTML = historyItems.map(h => `<div class="history-entry">
+    <span class="h-time">${h.time.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'})}</span>
+    <span class="h-method" style="color:${mc[h.method]||'var(--muted2)'}">${h.method}</span>
+    <span class="h-path">${h.path}</span>
+    <span class="h-code ${h.code>=200&&h.code<300?'h-ok':'h-err'}">${h.code}</span>
+  </div>`).join('');
+}
+function clearHistory() { historyItems = []; renderHistory(); }
+
+async function req(method, path, id) {
+  if (!_token) { alert('Login first — no token'); return { ok: false }; }
+  setBar(id, true); setStatus(id, null);
+  try {
+    const r = await fetch(base() + path, { method, headers: hdrs() });
+    const d = await r.json();
+    setBar(id, false); setStatus(id, r.status); setRes(id, d);
+    addHistory(method, path, r.status);
+    return { ok: r.ok, data: d, status: r.status };
+  } catch(e) {
+    setBar(id, false); setStatus(id, 0);
+    const err = { error: e.message };
+    setRes(id, err); addHistory(method, path, 0);
+    return { ok: false, data: err, status: 0 };
+  }
+}
+
+async function ping() {
+  try {
+    const r = await fetch(base() + '/following/' + (myId()||'test'), { headers: hdrs() });
+    setConn(r.status < 500 ? 'ok' : 'err');
+  } catch { setConn('err'); }
+}
+
+async function followUser() {
+  const id = document.getElementById('f-userId').value.trim();
+  if (!id) { alert('Enter a user ID'); return; }
+  const r = await req('POST', `/follow/${id}`, 'follow');
+  if (r && r.ok) refreshGraph();
+}
+async function unfollowUser() {
+  const id = document.getElementById('uf-userId').value.trim();
+  if (!id) { alert('Enter a user ID'); return; }
+  const r = await req('DELETE', `/unfollow/${id}`, 'unfollow');
+  if (r && r.ok) refreshGraph();
+}
+async function checkFollowing() {
+  const id = document.getElementById('ch-userId').value.trim();
+  if (!id) { alert('Enter a user ID'); return; }
+  await req('GET', `/follow/following/${id}`, 'check');
+}
+async function getFollowers() {
+  const id = document.getElementById('gf-userId').value.trim() || myId();
+  if (!id) { alert('Login first'); return; }
+  const r = await req('GET', `/followers/${id}`, 'gf');
+  if (r && r.ok && r.data?.followers) {
+    document.getElementById('statFollowers').textContent = r.data.followers.length;
+    renderGraph('graphFollowers', r.data.followers, 'follower');
+  }
+}
+async function getFollowing() {
+  const id = document.getElementById('gg-userId').value.trim() || myId();
+  if (!id) { alert('Login first'); return; }
+  const r = await req('GET', `/following/${id}`, 'gg');
+  if (r && r.ok && r.data?.following) {
+    document.getElementById('statFollowing').textContent = r.data.following.length;
+    renderGraph('graphFollowing', r.data.following, 'following');
+  }
+}
+async function refreshGraph() { if (!myId()) return; await getFollowers(); await getFollowing(); }
+
+function renderGraph(elId, items, field) {
+  const el = document.getElementById(elId);
+  if (!items.length) { el.innerHTML = '<div class="empty-list">none yet</div>'; return; }
+  el.innerHTML = items.map(item => {
+    const user = item[field] || item;
+    const name = user.username || user.userName || 'unknown';
+    const id   = (user._id || user).toString();
+    const initials = String(name).slice(0,2).toUpperCase();
+    return `<div class="user-chip">
+      <div class="chip-avatar">${initials}</div>
+      <div><div class="chip-name">${name}</div><div class="chip-id">${id.slice(-10)}</div></div>
+      <div class="chip-right"><button class="chip-btn" onclick="prefill('${id}')">use</button></div>
+    </div>`;
+  }).join('');
+}
+function prefill(id) {
+  ['f-userId','uf-userId','ch-userId','quickId'].forEach(i => document.getElementById(i).value = id);
+}
+
+async function quickFollow()   { const id = document.getElementById('quickId').value.trim(); if (!id) return; document.getElementById('f-userId').value = id;  await followUser(); }
+async function quickUnfollow() { const id = document.getElementById('quickId').value.trim(); if (!id) return; document.getElementById('uf-userId').value = id; await unfollowUser(); }
+async function quickCheck()    { const id = document.getElementById('quickId').value.trim(); if (!id) return; document.getElementById('ch-userId').value = id; await checkFollowing(); }
+async function myFollowers()   { document.getElementById('gf-userId').value = myId(); await getFollowers(); }
+async function myFollowing()   { document.getElementById('gg-userId').value = myId(); await getFollowing(); }
+</script>
+</body>
+</html>

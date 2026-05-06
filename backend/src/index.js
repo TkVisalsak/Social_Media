@@ -5,14 +5,16 @@ import { fileURLToPath } from "url";
 // Database and Cloudinary
 import { connectDB } from "./lib/db.js";
 import cloudinary from "./lib/cloudinary.js";
-import { app, server } from "./lib/socket.js";
+// import { app, server } from "./lib/socket.js";
 // Middleware
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import multer from "multer";
 // auth
 import authRoutes from "./routes/authRoute/auth.route.js";
 //messages
 import messageRoutes from "./routes/messageRoute/message.route.js";
+import conversationRoutes from "./routes/messageRoute/conversation.route.js";
 // posts
 import feedRoutes from "./routes/post/post.route.js";
 import likeRoutes from "./routes/post/like.route.js";
@@ -21,21 +23,29 @@ import commentRoutes from "./routes/post/comment.route.js";
 import shortVideoRoutes from "./routes/shortRoute/short.video.route.js";
 import shortLikeRoutes from "./routes/shortRoute/short.like.route.js";
 import shortCommentRoutes from "./routes/shortRoute/short.comment.route.js";
-
-
+//user
+import followRoutes from "./routes/userRoute/follow.route.js";
+import saveRoutes from "./routes/userRoute/save.route.js";
+//story
+import storyRoutes from "./routes/story/story.route.js";
 // import passport from "passport";
 // import "./lib/google.js";
-
+//web socket
+import http from "http";
+import { initSocket } from "./socket/socket.js";
 dotenv.config();
 
 const PORT = process.env.PORT || 5001;
 const HOST = process.env.PORT ? "0.0.0.0" : "127.0.0.1";
-
+const app    = express();
+const server = http.createServer(app);
+initSocket(server);          
 app.use(express.json());
 app.use(cookieParser());
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
+  "http://localhost:3001",
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://localhost:5500",
@@ -60,6 +70,7 @@ app.use(
 app.use("/api/auth", authRoutes);
 //message routes
 app.use("/api/messages", messageRoutes);
+app.use("/api/conversations", conversationRoutes);
 //post routes
 app.use("/api/feeds", feedRoutes);
 app.use("/api/likes", likeRoutes); 
@@ -68,6 +79,12 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/shorts/video", shortVideoRoutes);
 app.use("/api/shorts/likes", shortLikeRoutes);
 app.use("/api/shorts/comments", shortCommentRoutes);
+//user
+app.use("/api/follow", followRoutes);
+app.use("/api/save", saveRoutes);
+//story
+app.use("/api/story", storyRoutes);
+
 
  
 connectDB();

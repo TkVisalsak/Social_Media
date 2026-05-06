@@ -5,8 +5,6 @@ import cloudinary from "cloudinary";
 
 //Create post
 export const createPost = TryCatch(async (req, res) => {
-  console.log("🔥 BODY:", req.body);
-  console.log("🔥 FILE:", req.file);
 
   let media = [];
 

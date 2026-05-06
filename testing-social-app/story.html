@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Story Test</title>
+<style>
+body {
+  background: #111;
+  color: #fff;
+  font-family: Arial;
+  padding: 20px;
+}
+
+.container {
+  max-width: 500px;
+  margin: auto;
+}
+
+input, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+.story {
+  background: #222;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+
+img, video {
+  width: 100%;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #aaa;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Upload Story</h2>
+
+<input type="file" id="file" />
+<input type="text" id="caption" placeholder="caption" />
+
+<button onclick="uploadStory()">Upload</button>
+
+<h2>Story Feed</h2>
+<button onclick="loadStories()">Refresh</button>
+
+<div id="feed"></div>
+
+</div>
+
+<script>
+const API = "http://localhost:5001/api/story";
+const token = localStorage.getItem("token");
+
+function headers(extra = {}) {
+  return {
+    Authorization: "Bearer " + token,
+    ...extra
+  };
+}
+
+/* ─── UPLOAD STORY ─── */
+async function uploadStory() {
+  const file = document.getElementById("file").files[0];
+  const caption = document.getElementById("caption").value;
+
+  if (!file) {
+    alert("Select a file first");
+    return;
+  }
+
+  const form = new FormData();
+
+  // ⚠️ MUST MATCH: upload.single("video")
+  form.append("file", file);
+
+  form.append("caption", caption || "");
+  form.append("visibility", "public");
+
+  try {
+    const res = await fetch(`${API}/`, {
+      method: "POST",
+      headers: headers(), // DO NOT add Content-Type
+      body: form
+    });
+
+    const text = await res.text();
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      console.log("RAW RESPONSE:", text);
+      throw new Error("Server did not return JSON");
+    }
+
+    if (!res.ok) throw new Error(data.message || "Upload failed");
+
+    alert("Story uploaded");
+    loadStories();
+
+  } catch (err) {
+    alert(err.message);
+  }
+}
+
+/* ─── LOAD STORIES ─── */
+async function loadStories() {
+  const res = await fetch(`${API}/feed`, {
+    headers: headers()
+  });
+
+  const data = await res.json();
+  const feed = document.getElementById("feed");
+
+  console.log("STORY RESPONSE:", data);
+
+  feed.innerHTML = "";
+
+  (data || []).forEach(story => {
+    const div = document.createElement("div");
+    div.className = "story";
+
+    const media = story.media?.[0]; // first media item
+
+    div.innerHTML = `
+  <div><b>${story.userId?.username || "userId"}</b></div>
+  <div>${story.caption || ""}</div>
+
+  ${
+    media
+      ? media.type === "image"
+        ? `<img src="${media.url}" />`
+        : `<video src="${media.url}" controls></video>`
+      : "<div style='color:gray'>No media</div>"
+  }
+
+  <div class="row">
+    <span>👁 ${story.views || 0}</span>
+    <button onclick="viewStory('${story._id}')">Mark Viewed</button>
+  </div>
+`;
+
+    feed.appendChild(div);
+  });
+}
+/* ─── VIEW STORY ─── */
+async function viewStory(id) {
+  await fetch(`${API}/view/${id}`, {
+    method: "POST",
+    headers: headers()
+  });
+
+  loadStories();
+}
+
+loadStories();
+</script>
+
+</body>
+</html>

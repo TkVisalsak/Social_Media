@@ -293,7 +293,7 @@
       formData.append("file", file);
 
       try {
-        const res = await fetch(`${API_BASE}/posts`, {
+        const res = await fetch(`${API_BASE}/feeds`, {
           method: "POST",
           credentials: "include",
           headers: {

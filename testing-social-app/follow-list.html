@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>People</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cream: #f5f0e8;
+  --warm: #ede8dc;
+  --paper: #faf7f2;
+  --ink: #1a1814;
+  --ink2: #2e2b26;
+  --muted: #8a8478;
+  --muted2: #b5b0a6;
+  --accent: #c17b3f;
+  --accent2: #d4935a;
+  --accent-pale: #f0e4d4;
+  --green: #4a7c59;
+  --green-pale: #ddeee4;
+  --border: #ddd8ce;
+  --shadow: 0 2px 20px rgba(26,24,20,0.08);
+  --shadow2: 0 8px 40px rgba(26,24,20,0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── BACKGROUND TEXTURE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse at 20% 20%, rgba(193,123,63,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 80%, rgba(74,124,89,0.05) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; position: relative; z-index: 1; }
+.screen.active { display: block; }
+
+/* ════════════════════════════
+   LOGIN SCREEN
+════════════════════════════ */
+#loginScreen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.login-card {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: var(--shadow2);
+  overflow: hidden;
+  animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.login-top {
+  background: var(--ink);
+  padding: 40px 40px 36px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-top::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; left: 50%;
+  transform: translateX(-50%);
+  width: 120px; height: 60px;
+  background: var(--paper);
+  border-radius: 50% 50% 0 0;
+}
+
+.login-ornament {
+  font-family: 'Playfair Display', serif;
+  font-size: 11px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--accent2);
+  margin-bottom: 16px;
+  display: block;
+}
+
+.login-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 36px;
+  font-weight: 400;
+  color: var(--cream);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.login-title em {
+  font-style: italic;
+  color: var(--accent2);
+}
+
+.login-body {
+  padding: 48px 40px 36px;
+}
+
+.form-group { margin-bottom: 20px; }
+
+.form-label {
+  display: block;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 7px;
+  font-weight: 500;
+}
+
+.form-input {
+  width: 100%;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 12px 14px;
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-pale);
+}
+.form-input::placeholder { color: var(--muted2); }
+
+.login-btn {
+  width: 100%;
+  background: var(--ink);
+  color: var(--cream);
+  border: none;
+  border-radius: 2px;
+  padding: 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  margin-top: 8px;
+}
+.login-btn:hover { background: var(--ink2); }
+.login-btn:active { transform: scale(0.99); }
+
+.login-error {
+  background: #fde8e8;
+  border: 1px solid #f8c4c4;
+  border-radius: 2px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: #b94040;
+  margin-bottom: 16px;
+  display: none;
+}
+.login-error.show { display: block; }
+
+.login-footer {
+  text-align: center;
+  padding: 0 40px 32px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.login-footer a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+/* config row */
+.config-row {
+  padding: 14px 40px;
+  border-top: 1px solid var(--border);
+  background: var(--warm);
+}
+.config-row label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+  margin-bottom: 5px;
+}
+.config-row input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 4px 0;
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  outline: none;
+}
+
+
+/* ════════════════════════════
+   MAIN SCREEN
+════════════════════════════ */
+#mainScreen { min-height: 100vh; }
+
+/* NAV */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(245,240,232,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  height: 56px;
+  gap: 24px;
+}
+
+.nav-brand {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+  flex-shrink: 0;
+}
+
+.nav-brand em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+.nav-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-user {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--ink2);
+}
+
+.nav-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: var(--ink);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 12px;
+  color: var(--cream);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.nav-logout {
+  font-size: 12px;
+  color: var(--muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 4px 0;
+  transition: color 0.15s;
+}
+.nav-logout:hover { color: var(--ink); }
+
+/* CONTENT */
+.content {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 24px 80px;
+}
+
+/* section header */
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.section-title em { font-style: italic; color: var(--accent); }
+
+.section-count {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 300;
+}
+
+/* search bar */
+.search-wrap {
+  position: relative;
+  margin-bottom: 32px;
+}
+.search-icon {
+  position: absolute;
+  left: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted2);
+  font-size: 15px;
+  pointer-events: none;
+}
+.search-input {
+  width: 100%;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 12px 14px 12px 40px;
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: var(--shadow);
+}
+.search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-pale);
+}
+.search-input::placeholder { color: var(--muted2); }
+
+/* RECOMMENDED STRIP */
+.rec-section { margin-bottom: 44px; }
+
+.rec-label {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 500;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rec-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--accent-pale);
+}
+
+.rec-scroll {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+.rec-scroll::-webkit-scrollbar { display: none; }
+
+.rec-card {
+  flex-shrink: 0;
+  width: 140px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 20px 14px 16px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: fadeIn 0.4s both;
+}
+.rec-card:hover { transform: translateY(-3px); box-shadow: var(--shadow2); }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.rec-avatar {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--paper);
+  position: relative;
+}
+
+.rec-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-username {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-follow-btn {
+  width: 100%;
+  padding: 7px;
+  border-radius: 2px;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--cream);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.rec-follow-btn:hover { background: var(--ink2); }
+.rec-follow-btn.following {
+  background: var(--green-pale);
+  border-color: var(--green);
+  color: var(--green);
+}
+.rec-follow-btn.loading { opacity: 0.6; pointer-events: none; }
+
+/* ALL USERS GRID */
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px;
+}
+
+.user-card {
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 20px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  animation: fadeIn 0.4s both;
+}
+.user-card:hover { transform: translateY(-2px); box-shadow: var(--shadow2); border-color: var(--muted2); }
+
+.user-avatar {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Playfair Display', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--paper);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.user-info { flex: 1; min-width: 0; }
+
+.user-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-handle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-mutual {
+  font-size: 11px;
+  color: var(--accent);
+  margin-top: 6px;
+  display: none;
+}
+.user-mutual.show { display: block; }
+
+.follow-btn {
+  flex-shrink: 0;
+  padding: 7px 16px;
+  border-radius: 2px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.follow-btn:hover { background: var(--ink); color: var(--cream); }
+.follow-btn.following {
+  background: var(--green-pale);
+  border-color: var(--green);
+  color: var(--green);
+}
+.follow-btn.following:hover {
+  background: #fde8e8;
+  border-color: #f8c4c4;
+  color: #b94040;
+}
+.follow-btn.loading { opacity: 0.5; pointer-events: none; }
+
+/* empty / loading states */
+.state-box {
+  grid-column: 1 / -1;
+  padding: 60px 20px;
+  text-align: center;
+}
+.state-box .state-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+  opacity: 0.35;
+}
+.state-box p { color: var(--muted); font-size: 14px; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--warm) 25%, var(--border) 50%, var(--warm) 75%);
+  background-size: 200% 100%;
+  animation: skel 1.2s infinite;
+  border-radius: 2px;
+}
+@keyframes skel { 0%{background-position:200%} 100%{background-position:-200%} }
+
+/* toast */
+.toast {
+  position: fixed;
+  bottom: 28px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--ink);
+  color: var(--cream);
+  padding: 10px 20px;
+  border-radius: 2px;
+  font-size: 13px;
+  font-weight: 400;
+  z-index: 999;
+  transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+  white-space: nowrap;
+  box-shadow: var(--shadow2);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.ok   { background: var(--green); }
+.toast.err  { background: #b94040; }
+
+/* avatar colors */
+.av-0 { background: #5c6bc0; }
+.av-1 { background: #c17b3f; }
+.av-2 { background: #4a7c59; }
+.av-3 { background: #8d5b8e; }
+.av-4 { background: #b8596a; }
+.av-5 { background: #3d7fa6; }
+.av-6 { background: #7a8a4f; }
+.av-7 { background: #b87333; }
+</style>
+</head>
+<body>
+
+<!-- ══════════ LOGIN ══════════ -->
+<div id="loginScreen" class="screen active">
+  <div class="login-card">
+    <div class="login-top">
+      <span class="login-ornament">Welcome back</span>
+      <div class="login-title">Find <em>people</em><br>you know</div>
+    </div>
+    <div class="login-body">
+      <div class="login-error" id="loginError"></div>
+      <div class="form-group">
+        <label class="form-label">Email or Username</label>
+        <input class="form-input" id="loginEmail" type="text" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-input" id="loginPass" type="password" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')doLogin()" />
+      </div>
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign in</button>
+    </div>
+    <div class="config-row">
+      <label>API base URL</label>
+      <input id="cfgUrl" value="http://localhost:5001/api" placeholder="http://localhost:5001/api" oninput="saveConfig()" />
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MAIN ══════════ -->
+<div id="mainScreen" class="screen">
+  <nav class="nav">
+    <div class="nav-brand">Find <em>people</em></div>
+    <div class="nav-right">
+      <div class="nav-user">
+        <div class="nav-avatar" id="navAvatar">?</div>
+        <span id="navName">—</span>
+      </div>
+      <button class="nav-logout" onclick="logout()">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="content">
+
+    <!-- RECOMMENDED -->
+    <div class="rec-section">
+      <div class="rec-label">Suggested for you</div>
+      <div class="rec-scroll" id="recScroll">
+        <!-- skeleton -->
+        ${[1,2,3,4].map(()=>`
+          <div class="rec-card">
+            <div class="skeleton" style="width:52px;height:52px;border-radius:50%;margin:0 auto 10px"></div>
+            <div class="skeleton" style="height:13px;margin-bottom:6px;border-radius:2px"></div>
+            <div class="skeleton" style="height:11px;width:70%;margin:0 auto 12px;border-radius:2px"></div>
+            <div class="skeleton" style="height:28px;border-radius:2px"></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- ALL USERS -->
+    <div class="section-header">
+      <h2 class="section-title">All <em>people</em></h2>
+      <span class="section-count" id="userCount">loading…</span>
+    </div>
+
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input class="search-input" id="searchInput" placeholder="Search by name or username…" oninput="filterUsers()" />
+    </div>
+
+    <div class="users-grid" id="usersGrid">
+      ${[1,2,3,4,5,6].map(()=>`
+        <div class="user-card" style="pointer-events:none">
+          <div class="skeleton" style="width:44px;height:44px;border-radius:50%;flex-shrink:0"></div>
+          <div style="flex:1">
+            <div class="skeleton" style="height:14px;margin-bottom:8px;border-radius:2px"></div>
+            <div class="skeleton" style="height:12px;width:60%;border-radius:2px"></div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ════════════ STATE ════════════ */
+let token   = '';
+let myUser  = null;
+let allUsers = [];
+let followingSet = new Set(); // IDs i'm following
+
+/* ════════════ CONFIG ════════════ */
+function base() { return (localStorage.getItem('fu_url') || 'http://localhost:5001/api').replace(/\/$/,''); }
+function saveConfig() { localStorage.setItem('fu_url', document.getElementById('cfgUrl').value); }
+
+function hdrs(json=false) {
+  const h = { Authorization: 'Bearer ' + token };
+  if (json) h['Content-Type'] = 'application/json';
+  return h;
+}
+
+/* ════════════ TOAST ════════════ */
+let toastTimer;
+function toast(msg, type='') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+/* ════════════ LOGIN ════════════ */
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass  = document.getElementById('loginPass').value.trim();
+  if (!email || !pass) { showErr('Please fill in all fields'); return; }
+
+  const btn = document.getElementById('loginBtn');
+  btn.textContent = 'Signing in…';
+  btn.disabled = true;
+
+  try {
+    const r = await fetch(base() + '/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password: pass })
+    });
+    const d = await r.json();
+    if (!r.ok) { showErr(d.message || 'Login failed'); return; }
+
+    token  = d.token || d.accessToken || d.data?.token;
+    myUser = d.user  || d.data?.user  || d;
+
+    if (!token) { showErr('No token in response — check your login route'); return; }
+
+    localStorage.setItem('fu_token', token);
+    localStorage.setItem('fu_user',  JSON.stringify(myUser));
+
+    gotoMain();
+  } catch(e) {
+    showErr('Cannot reach server — is it running?');
+  } finally {
+    btn.textContent = 'Sign in';
+    btn.disabled = false;
+  }
+}
+
+function showErr(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function logout() {
+  token = ''; myUser = null; allUsers = []; followingSet.clear();
+  localStorage.removeItem('fu_token');
+  localStorage.removeItem('fu_user');
+  document.getElementById('loginScreen').classList.add('active');
+  document.getElementById('mainScreen').classList.remove('active');
+  document.getElementById('loginError').classList.remove('show');
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPass').value  = '';
+}
+
+function gotoMain() {
+  document.getElementById('loginScreen').classList.remove('active');
+  document.getElementById('mainScreen').classList.add('active');
+
+  const name = myUser?.username || myUser?.name || myUser?.email || '?';
+  document.getElementById('navName').textContent    = name;
+  document.getElementById('navAvatar').textContent  = name[0].toUpperCase();
+
+  loadUsers();
+}
+
+/* ════════════ LOAD USERS ════════════ */
+async function loadUsers() {
+  try {
+    // 1. fetch all users
+    const r = await fetch(base() + '/messages/users', { headers: hdrs() });
+    const d = await r.json();
+    allUsers = (Array.isArray(d) ? d : d.users || d.data || [])
+      .filter(u => u._id !== (myUser?._id || myUser?.id));
+
+    // 2. fetch who I'm following
+    const myId = myUser?._id || myUser?.id;
+    if (myId) {
+      try {
+        const r2 = await fetch(base() + '/following/' + myId, { headers: hdrs() });
+        const d2 = await r2.json();
+        const list = d2.following || d2 || [];
+        list.forEach(item => {
+          const fid = item.following?._id || item.following || item._id;
+          if (fid) followingSet.add(fid.toString());
+        });
+      } catch {}
+    }
+
+    renderAll();
+  } catch(e) {
+    document.getElementById('usersGrid').innerHTML =
+      `<div class="state-box"><div class="state-icon">⚠</div><p>${e.message}</p></div>`;
+  }
+}
+
+/* ════════════ RENDER ════════════ */
+const COLORS = ['av-0','av-1','av-2','av-3','av-4','av-5','av-6','av-7'];
+function colorFor(id) { let h=0; for(const c of String(id)) h=(h*31+c.charCodeAt(0))&0xffff; return COLORS[h%COLORS.length]; }
+
+function renderAll() {
+  const filtered = filterList();
+  document.getElementById('userCount').textContent = filtered.length + ' people';
+  renderRecommended();
+  renderGrid(filtered);
+}
+
+function filterList() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  if (!q) return allUsers;
+  return allUsers.filter(u => {
+    const name = (u.username || u.name || '').toLowerCase();
+    const email = (u.email || '').toLowerCase();
+    return name.includes(q) || email.includes(q);
+  });
+}
+
+function filterUsers() { renderAll(); }
+
+function renderRecommended() {
+  // pick up to 8 users not yet followed, shuffled
+  const notFollowed = allUsers.filter(u => !followingSet.has(u._id?.toString()));
+  const picks = notFollowed.sort(() => Math.random() - 0.5).slice(0, 8);
+  const el = document.getElementById('recScroll');
+
+  if (!picks.length) {
+    el.innerHTML = `<div style="font-size:13px;color:var(--muted);padding:24px">You're following everyone! 🎉</div>`;
+    return;
+  }
+
+  el.innerHTML = picks.map((u, i) => {
+    const name = u.username || u.name || 'User';
+    const initials = name[0].toUpperCase();
+    const col = colorFor(u._id);
+    const isFollowing = followingSet.has(u._id?.toString());
+    return `<div class="rec-card" style="animation-delay:${i*0.05}s">
+      <div class="rec-avatar ${col}">${initials}</div>
+      <div class="rec-name">${name}</div>
+      <div class="rec-username">@${(u.username||u.email||'').toLowerCase()}</div>
+      <button class="rec-follow-btn ${isFollowing?'following':''}"
+        id="recbtn-${u._id}"
+        onclick="toggleFollow('${u._id}', this)">
+        ${isFollowing ? '✓ Following' : '+ Follow'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function renderGrid(users) {
+  const el = document.getElementById('usersGrid');
+  if (!users.length) {
+    el.innerHTML = `<div class="state-box"><div class="state-icon">◌</div><p>No users found</p></div>`;
+    return;
+  }
+
+  el.innerHTML = users.map((u, i) => {
+    const name = u.username || u.name || 'User';
+    const initials = name[0].toUpperCase();
+    const col = colorFor(u._id);
+    const isFollowing = followingSet.has(u._id?.toString());
+    const handle = u.username || u.email || '';
+
+    return `<div class="user-card" style="animation-delay:${Math.min(i,12)*0.04}s">
+      <div class="user-avatar ${col}">${initials}</div>
+      <div class="user-info">
+        <div class="user-name">${name}</div>
+        <div class="user-handle">@${handle.toLowerCase()}</div>
+        <div class="user-mutual" id="mutual-${u._id}"></div>
+      </div>
+      <button class="follow-btn ${isFollowing?'following':''}"
+        id="btn-${u._id}"
+        onclick="toggleFollow('${u._id}', this)">
+        ${isFollowing ? 'Following' : 'Follow'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+/* ════════════ FOLLOW / UNFOLLOW ════════════ */
+async function toggleFollow(userId, btn) {
+  const isFollowing = followingSet.has(userId.toString());
+  btn.classList.add('loading');
+
+  try {
+    let r;
+    if (isFollowing) {
+      r = await fetch(base() + '/unfollow/' + userId, {
+        method: 'DELETE', headers: hdrs()
+      });
+    } else {
+      r = await fetch(base() + '/follow/' + userId, {
+        method: 'POST', headers: hdrs()
+      });
+    }
+
+    const d = await r.json();
+    if (!r.ok) { toast(d.message || 'Something went wrong', 'err'); return; }
+
+    if (isFollowing) {
+      followingSet.delete(userId.toString());
+      toast('Unfollowed');
+    } else {
+      followingSet.add(userId.toString());
+      toast('Following!', 'ok');
+    }
+
+    // update all buttons for this user (grid + rec strip)
+    syncButtons(userId);
+    renderRecommended(); // refresh rec strip
+
+  } catch(e) {
+    toast('Request failed — ' + e.message, 'err');
+  } finally {
+    btn.classList.remove('loading');
+  }
+}
+
+function syncButtons(userId) {
+  const isNow = followingSet.has(userId.toString());
+
+  // grid button
+  const gridBtn = document.getElementById('btn-' + userId);
+  if (gridBtn) {
+    gridBtn.className = 'follow-btn ' + (isNow ? 'following' : '');
+    gridBtn.textContent = isNow ? 'Following' : 'Follow';
+  }
+
+  // rec button
+  const recBtn = document.getElementById('recbtn-' + userId);
+  if (recBtn) {
+    recBtn.className = 'rec-follow-btn ' + (isNow ? 'following' : '');
+    recBtn.textContent = isNow ? '✓ Following' : '+ Follow';
+  }
+}
+
+/* ════════════ RESTORE SESSION ════════════ */
+(function() {
+  const savedUrl = localStorage.getItem('fu_url');
+  const savedTok = localStorage.getItem('fu_token');
+  const savedUsr = localStorage.getItem('fu_user');
+  if (savedUrl) document.getElementById('cfgUrl').value = savedUrl;
+  if (savedTok && savedUsr) {
+    try {
+      token  = savedTok;
+      myUser = JSON.parse(savedUsr);
+      gotoMain();
+    } catch {}
+  }
+})();
+</script>
+</body>
+</html>
