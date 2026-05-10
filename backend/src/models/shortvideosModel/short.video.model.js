@@ -64,9 +64,10 @@ const shortVideoSchema = new mongoose.Schema(
       index: true,
     },
 
-    isPublic: {
-      type: Boolean,
-      default: true,
+    visibility: {
+      type: String,
+      enum: ["public", "followers", "friends", "private"],
+      default: "public",
     },
 
     isDeleted: {

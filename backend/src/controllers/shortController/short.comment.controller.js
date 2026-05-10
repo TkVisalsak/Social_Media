@@ -1,5 +1,5 @@
-import ShortComment from "../../models/shortvideos/short.comment.model.js";
-import ShortVideo from "../../models/shortvideos/short.video.model.js";
+import ShortComment from "../../models/shortvideosModel/short.comment.model.js";
+import ShortVideo from "../../models/shortvideosModel/short.video.model.js";
 import TryCatch from "../../utils/Trycatch.js";
 
 export const createShortComment = TryCatch(async (req, res) => {
@@ -45,7 +45,7 @@ export const createShortComment = TryCatch(async (req, res) => {
     });
   }
 
-  const populated = await comment.populate("userId", "userName avatar");
+  const populated = await comment.populate("userId", "userName profilePic firstName lastName");
 
   res.status(201).json({
     message: parentId ? "Reply added" : "Comment added",
@@ -57,7 +57,7 @@ export const getShortComments = TryCatch(async (req, res) => {
   const shortId = req.params.shortId;
 
   const comments = await ShortComment.find({ shortId })
-    .populate("userId", "userName avatar")
+    .populate("userId", "userName profilePic firstName lastName")
     .sort({ createdAt: -1 })
     .lean();
 
@@ -132,7 +132,7 @@ export const editShortComment = TryCatch(async (req, res) => {
 
   await comment.save();
 
-  const updated = await comment.populate("userId", "userName avatar");
+  const updated = await comment.populate("userId", "userName profilePic firstName lastName");
 
   res.json({
     message: "Updated",
@@ -174,7 +174,7 @@ export const replyShortComment = TryCatch(async (req, res) => {
     $inc: { replyCount: 1 },
   });
 
-  const populated = await reply.populate("userId", "userName avatar");
+  const populated = await reply.populate("userId", "userName profilePic firstName lastName");
 
   res.status(201).json({
     message: "Reply added",

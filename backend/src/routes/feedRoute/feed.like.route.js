@@ -3,9 +3,9 @@ import { protectRoute } from "../../middleware/auth.middleware.js";
 
 import {
   toggleLike,
-  getPostLikes,
+  getFeedLikes,
   checkUserLike,
-} from "../../controllers/post/like.controller.js";
+} from "../../controllers/feedController/feed.like.controller.js";
 
 const router = express.Router();
 
@@ -13,7 +13,7 @@ const router = express.Router();
 router.post("/:id", protectRoute, toggleLike);
 
  
-router.get("/:id/count", getPostLikes);
+router.get("/:id/count", getFeedLikes);
 
  
 router.get("/:id/check", protectRoute, checkUserLike);

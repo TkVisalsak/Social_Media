@@ -4,10 +4,10 @@ import { protectRoute } from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-router.post("/:userId", protectRoute, followUser);
-router.delete("/unfollow/:userId", protectRoute, unfollowUser);
-router.get("/followers/:userId", getFollowers);
-router.get("/following/:userId", getFollowing);
-router.get("/following/:userId", protectRoute, checkIfFollowing);
+router.post("/:userId",              protectRoute, followUser);
+router.delete("/unfollow/:userId",   protectRoute, unfollowUser);
+router.get("/followers/:userId",     getFollowers);
+router.get("/following/:userId",     getFollowing);
+router.get("/check/:userId",         protectRoute, checkIfFollowing);
 
 export default router;

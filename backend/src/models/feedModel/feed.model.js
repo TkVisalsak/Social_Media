@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const postSchema = new mongoose.Schema(
+const feedSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -26,6 +26,10 @@ const postSchema = new mongoose.Schema(
           type: String,
           required: false,
         },
+        publicId: {
+          type: String,
+          required: false,
+        },
       },
     ],
 
@@ -46,7 +50,7 @@ const postSchema = new mongoose.Schema(
 
     visibility: {
       type: String,
-      enum: ["public", "friends", "private"],
+      enum: ["public", "friends", "private", "followers"],
       default: "public",
     },
 
@@ -71,9 +75,10 @@ const postSchema = new mongoose.Schema(
 );
 
  
-postSchema.index({ userId: 1, createdAt: -1 });
-postSchema.index({ createdAt: -1 });
+feedSchema.index({ userId: 1, createdAt: -1 });
+feedSchema.index({ createdAt: -1 });
+feedSchema.index({ visibility: 1, createdAt: -1 });
 
-const Post = mongoose.model("Post", postSchema);
+const Feed = mongoose.model("Feed", feedSchema);
 
-export default Post;
+export default Feed;

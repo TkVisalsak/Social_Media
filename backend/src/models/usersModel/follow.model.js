@@ -15,6 +15,7 @@ const followSchema = new mongoose.Schema({
 
 // prevent duplicates
 followSchema.index({ follower: 1, following: 1 }, { unique: true });
+followSchema.index({ following: 1 });
 
 const Follow = mongoose.model("Follow", followSchema);
 

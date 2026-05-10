@@ -10,16 +10,9 @@ import { protectRoute } from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// save item
 router.post("/", protectRoute, saveItem);
-
-// remove saved item
-router.delete("/:itemId", protectRoute, unsaveItem);
-
-// get all saved
-router.get("/", protectRoute, getSavedItems);
-
-// check saved status
-router.get("/check/:itemId", protectRoute, checkSaved);
+router.delete("/:contentId", protectRoute, unsaveItem);
+router.get("/check/:contentId", protectRoute, checkSaved);  // specific before generic
+router.get("/:user", getSavedItems);
 
 export default router;

@@ -1,70 +1,112 @@
-import User from "../../models/users/user.model.js";
-import Message from "../../models/messages/message.model.js";
-
+import User from "../../models/usersModel/user.model.js";
+import Message from "../../models/messagesModel/message.model.js";
+import Conversation from "../../models/messagesModel/conversation.model.js";
 import cloudinary from "../../lib/cloudinary.js";
-import { getReceiverSocketId, io } from "../../lib/socket.js";
+import { io, getReceiverSocketIds } from "../../socket/socket.js";
+import TryCatch from "../../utils/Trycatch.js";
 
-export const getUsersForSidebar = async (req, res) => {
-  try {
-    const loggedInUserId = req.user._id;
-    const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
+/**
+ * Sidebar users (paginated). Returns users the caller could DM.
+ */
+export const getUsersForSidebar = TryCatch(async (req, res) => {
+  const loggedInUserId = req.user._id;
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(50, parseInt(req.query.limit) || 20);
+  const skip = (page - 1) * limit;
 
-    res.status(200).json(filteredUsers);
-  } catch (error) {
-    console.error("Error in getUsersForSidebar: ", error.message);
-    res.status(500).json({ error: "Internal server error" });
+  const [users, total] = await Promise.all([
+    User.find({ _id: { $ne: loggedInUserId } })
+      .select("userName profilePic firstName lastName")
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    User.countDocuments({ _id: { $ne: loggedInUserId } }),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: users,
+    pagination: { page, limit, total, hasMore: skip + users.length < total },
+  });
+});
+
+/**
+ * Get the 1-to-1 conversation between caller and `:id`, then return its
+ * messages. Backed by the Conversation model — matches the schema.
+ */
+export const getMessages = TryCatch(async (req, res) => {
+  const { id: otherUserId } = req.params;
+  const myId = req.user._id;
+
+  const conversation = await Conversation.findOne({
+    isGroup: false,
+    members: { $all: [myId, otherUserId], $size: 2 },
+  });
+
+  if (!conversation) {
+    return res.status(200).json({ success: true, data: [] });
   }
-};
 
-export const getMessages = async (req, res) => {
-  try {
-    const { id: userToChatId } = req.params;
-    const myId = req.user._id;
+  const messages = await Message.find({ conversationId: conversation._id })
+    .sort({ createdAt: 1 })
+    .populate("senderId", "userName profilePic")
+    .lean();
 
-    const messages = await Message.find({
-      $or: [
-        { senderId: myId, receiverId: userToChatId },
-        { senderId: userToChatId, receiverId: myId },
-      ],
+  res.status(200).json({ success: true, data: messages });
+});
+
+/**
+ * Send a DM. Creates the 1-to-1 conversation on first message, then writes
+ * the message and pushes it to all of the receiver's open sockets.
+ */
+export const sendMessage = TryCatch(async (req, res) => {
+  const { text, image } = req.body;
+  const { id: receiverId } = req.params;
+  const senderId = req.user._id;
+
+  if (!text && !image) {
+    return res.status(400).json({ success: false, message: "Empty message" });
+  }
+
+  let imageUrl;
+  if (image) {
+    const uploadResponse = await cloudinary.uploader.upload(image);
+    imageUrl = uploadResponse.secure_url;
+  }
+
+  // Find or create the 1-to-1 conversation.
+  let conversation = await Conversation.findOne({
+    isGroup: false,
+    members: { $all: [senderId, receiverId], $size: 2 },
+  });
+  if (!conversation) {
+    conversation = await Conversation.create({
+      isGroup: false,
+      members: [senderId, receiverId],
     });
-
-    res.status(200).json(messages);
-  } catch (error) {
-    console.log("Error in getMessages controller: ", error.message);
-    res.status(500).json({ error: "Internal server error" });
   }
-};
 
-export const sendMessage = async (req, res) => {
-  try {
-    const { text, image } = req.body;
-    const { id: receiverId } = req.params;
-    const senderId = req.user._id;
+  const newMessage = await Message.create({
+    conversationId: conversation._id,
+    senderId,
+    text,
+    image: imageUrl,
+    readBy: [senderId],
+  });
 
-    let imageUrl;
-    if (image) {
-      // Upload base64 image to cloudinary
-      const uploadResponse = await cloudinary.uploader.upload(image);
-      imageUrl = uploadResponse.secure_url;
-    }
+  await Conversation.findByIdAndUpdate(conversation._id, {
+    lastMessage: newMessage._id,
+  });
 
-    const newMessage = new Message({
-      senderId,
-      receiverId,
-      text,
-      image: imageUrl,
-    });
+  const populated = await newMessage.populate(
+    "senderId",
+    "userName profilePic"
+  );
 
-    await newMessage.save();
+  const socketIds = getReceiverSocketIds(receiverId);
+  socketIds.forEach((socketId) => {
+    io?.to(socketId).emit("newMessage", populated);
+  });
 
-    const receiverSocketId = getReceiverSocketId(receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("newMessage", newMessage);
-    }
-
-    res.status(201).json(newMessage);
-  } catch (error) {
-    console.log("Error in sendMessage controller: ", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
+  res.status(201).json({ success: true, data: populated });
+});

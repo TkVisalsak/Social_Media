@@ -8,9 +8,9 @@ const likeSchema = new mongoose.Schema(
       required: true,
     },
 
-    postId: {
+    feedId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Post",
+      ref: "Feed",
       required: true,
     },
   },
@@ -18,7 +18,7 @@ const likeSchema = new mongoose.Schema(
 );
 
  
-likeSchema.index({ userId: 1, postId: 1 }, { unique: true });
+likeSchema.index({ userId: 1, feedId: 1 }, { unique: true });
 
 const Like = mongoose.model("Like", likeSchema);
 

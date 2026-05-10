@@ -9,14 +9,14 @@ const saveSchema = new mongoose.Schema(
       index: true,
     },
 
-    itemId: {
+    contentId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
     },
 
-    itemType: {
+    contentType: {
       type: String,
-      enum: ["post", "short", "story"],
+      enum: ["feed", "short"],
       required: true,
     },
   },
@@ -24,6 +24,6 @@ const saveSchema = new mongoose.Schema(
 );
 
 // prevent duplicate saves
-saveSchema.index({ userId: 1, itemId: 1, itemType: 1 }, { unique: true });
+saveSchema.index({ userId: 1, contentId: 1, contentType: 1 }, { unique: true });
 
 export default mongoose.model("Save", saveSchema);

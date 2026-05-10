@@ -15,6 +15,12 @@
       --border:    #2a2a32;
       --accent:    #ff2d55;
       --accent-lo: rgba(255,45,85,.10);
+      --save-color:  #f5a623;
+      --save-lo:     rgba(245,166,35,.12);
+      --repost-color:#22d3a5;
+      --repost-lo:   rgba(34,211,165,.12);
+      --follow-color:#7c6df8;
+      --follow-lo:   rgba(124,109,248,.12);
       --text:      #f0f0f5;
       --muted:     #7a7a8c;
       --radius:    14px;
@@ -97,6 +103,7 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
+    /* ── Post header ── */
     .post-header {
       display: flex;
       align-items: center;
@@ -114,9 +121,40 @@
       font-size: 16px;
       flex-shrink: 0;
     }
+    .post-author {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
     .username {
       font-weight: 600;
       font-size: 14px;
+    }
+    /* ── Follow button (header) ── */
+    .follow-btn {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--follow-color);
+      color: var(--follow-color);
+      background: var(--follow-lo);
+      transition: all .18s;
+      white-space: nowrap;
+    }
+    .follow-btn:hover,
+    .follow-btn.following {
+      background: var(--follow-color);
+      color: #fff;
+    }
+    .follow-btn.following { opacity: .85; }
+    .follow-btn:disabled {
+      opacity: .45;
+      cursor: default;
     }
 
     /* ── Media ── */
@@ -141,29 +179,89 @@
     .post-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
       padding: 12px 16px;
+      flex-wrap: wrap;
     }
-    .like-btn {
-      padding: 6px 16px;
-      background: var(--accent-lo);
-      border: 1px solid transparent;
+
+    /* shared pill button style */
+    .action-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 6px 14px;
       border-radius: 20px;
-      color: var(--accent);
       font-family: 'DM Sans', sans-serif;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
+      border: 1px solid transparent;
       transition: all .18s;
+      white-space: nowrap;
+    }
+    .action-btn:disabled { opacity: .5; cursor: default; }
+
+    /* Like */
+    .like-btn {
+      background: var(--accent-lo);
+      color: var(--accent);
     }
     .like-btn:hover,
-    .like-btn.liked {
+    .like-btn.active {
       background: var(--accent);
       color: #fff;
     }
+
+    /* Repost */
+    .repost-btn {
+      background: var(--repost-lo);
+      color: var(--repost-color);
+    }
+    .repost-btn:hover,
+    .repost-btn.active {
+      background: var(--repost-color);
+      color: #fff;
+    }
+
+    /* Save */
+    .save-btn {
+      background: var(--save-lo);
+      color: var(--save-color);
+    }
+    .save-btn:hover,
+    .save-btn.active {
+      background: var(--save-color);
+      color: #fff;
+    }
+
     .like-count {
       font-size: 13px;
       color: var(--muted);
+      margin-left: 2px;
+    }
+
+    /* ── Toast notification ── */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 20px;
+      border-radius: 24px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s, transform .25s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
     }
 
     /* ── Comment box ── */
@@ -185,7 +283,6 @@
       transition: border-color .2s;
     }
     .comment-input:focus { border-color: var(--accent); }
-
     .comment-send-btn {
       padding: 9px 16px;
       background: var(--accent);
@@ -205,7 +302,6 @@
       border-top: 1px solid var(--border);
       padding: 10px 16px 14px;
     }
-
     .comment-item {
       background: var(--surface2);
       border-radius: 8px;
@@ -215,7 +311,6 @@
       line-height: 1.45;
     }
     .comment-item b { color: var(--text); }
-
     .comment-meta {
       margin-top: 6px;
       display: flex;
@@ -232,18 +327,13 @@
     }
     .meta-btn:hover { color: var(--text); }
     .meta-btn.del:hover { color: var(--accent); }
-
     .reply-container {
       margin-left: 14px;
       border-left: 2px solid var(--border);
       padding-left: 10px;
       margin-top: 6px;
     }
-
-    /* reply input */
-    .reply-box {
-      margin-top: 6px;
-    }
+    .reply-box { margin-top: 6px; }
     .reply-box input {
       background: var(--bg);
       border: 1px solid var(--border);
@@ -288,6 +378,8 @@
       .feed-title { font-size: 22px; }
       .post-media img,
       .post-media video { max-height: 320px; }
+      .post-actions { gap: 6px; }
+      .action-btn { padding: 6px 10px; font-size: 12px; }
     }
   </style>
 </head>
@@ -311,11 +403,15 @@
     </div>
   </main>
 
+  <!-- Toast -->
+  <div id="toast"></div>
+
   <script>
     const API_BASE = "http://localhost:5001/api";
 
     /* ── Auth ── */
     function getToken() { return localStorage.getItem("token"); }
+    function getCurrentUserId() { return localStorage.getItem("userId"); }
 
     function requireAuth() {
       if (!getToken()) {
@@ -333,21 +429,19 @@
       window.location.href = "/login.html";
     });
 
+    /* ── Toast ── */
+    let toastTimer;
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove("show"), 2500);
+    }
+
     /* ── API wrapper ── */
     async function api(url, options = {}) {
       const token = getToken();
-
-      console.log("📤 API Request:", {
-        url: API_BASE + url,
-        method: options.method || "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          ...(options.headers || {}),
-        },
-        body: options.body ? JSON.parse(options.body) : null,
-      });
-
       const res = await fetch(API_BASE + url, {
         ...options,
         headers: {
@@ -356,32 +450,158 @@
           ...(options.headers || {}),
         },
       });
-
       const data = await res.json().catch(() => null);
-      
-      console.log("📥 API Response:", {
-        url: API_BASE + url,
-        status: res.status,
-        ok: res.ok,
-        data: data,
-      });
-
       if (!res.ok) throw new Error(data?.message || "Request failed");
       return data;
     }
 
-    /* ── Like ── */
-    async function toggleLike(postId, btn, countEl) {
-      const data      = await api(`/likes/${postId}`, { method: "POST" });
-      const countData = await api(`/likes/${postId}/count`);
-      countEl.textContent = countData.likes + " likes";
-      btn.textContent     = data.liked ? "❤️ Liked" : "🤍 Like";
-      btn.classList.toggle("liked", data.liked);
+    /* ══════════════════════════════════════
+       ── FOLLOW ──
+    ══════════════════════════════════════ */
+    async function initFollow(authorId, btn) {
+      const currentUserId = getCurrentUserId();
+
+      // Hide follow btn if viewing own post
+      if (currentUserId && currentUserId === authorId) {
+        btn.style.display = "none";
+        return;
+      }
+
+      // Check current follow status
+      try {
+        const data = await api(`/follow/following/${authorId}`);
+        // API returns list of people the current user follows
+        const isFollowing = Array.isArray(data)
+          ? data.some(u => u._id === authorId || u === authorId)
+          : !!data?.isFollowing;
+        setFollowState(btn, isFollowing);
+      } catch {
+        setFollowState(btn, false);
+      }
+
+      btn.addEventListener("click", async () => {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        const currently = btn.classList.contains("following");
+        try {
+          if (currently) {
+            await api(`/follow/unfollow/${authorId}`, { method: "DELETE" });
+            setFollowState(btn, false);
+            showToast("Unfollowed");
+          } else {
+            await api(`/follow/${authorId}`, { method: "POST" });
+            setFollowState(btn, true);
+            showToast("Following ✓");
+          }
+        } catch (err) {
+          showToast("❌ " + err.message);
+        } finally {
+          btn.disabled = false;
+        }
+      });
     }
 
-    /* ── Comments ── */
-    async function loadComments(postId, container) {
-      const data = await api(`/comments/${postId}`);
+    function setFollowState(btn, isFollowing) {
+      if (isFollowing) {
+        btn.textContent = "✓ Following";
+        btn.classList.add("following");
+      } else {
+        btn.textContent = "+ Follow";
+        btn.classList.remove("following");
+      }
+    }
+
+    /* ══════════════════════════════════════
+       ── REPOST ──
+    ══════════════════════════════════════ */
+    async function initRepost(feedId, btn) {
+      // Optimistically show state; no check endpoint in provided routes
+      btn.addEventListener("click", async () => {
+        if (btn.disabled) return;
+        if (btn.classList.contains("active")) {
+          showToast("Already reposted");
+          return;
+        }
+        btn.disabled = true;
+        try {
+          await api(`/repost/feed`, {
+            method: "POST",
+            body: JSON.stringify({ contentId: feedId, contentType: "feed" }),
+          });
+          btn.classList.add("active");
+          btn.innerHTML = "🔁 Reposted";
+          showToast("Reposted ✓");
+        } catch (err) {
+          showToast("❌ " + err.message);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    }
+
+    /* ══════════════════════════════════════
+       ── SAVE ──
+    ══════════════════════════════════════ */
+    async function initSave(feedId, btn) {
+      // Check saved status
+      try {
+        const data = await api(`/save/check/${feedId}`);
+        setSaveState(btn, !!data?.isSaved);
+      } catch {
+        setSaveState(btn, false);
+      }
+
+      btn.addEventListener("click", async () => {
+        if (btn.disabled) return;
+        btn.disabled = true;
+        const currently = btn.classList.contains("active");
+        try {
+          if (currently) {
+            await api(`/save/${feedId}`, { method: "DELETE" });
+            setSaveState(btn, false);
+            showToast("Removed from saved");
+          } else {
+            await api(`/save`, {
+              method: "POST",
+              body: JSON.stringify({ contentId: feedId, contentType: "feed" }),
+            });
+            setSaveState(btn, true);
+            showToast("Saved ✓");
+          }
+        } catch (err) {
+          showToast("❌ " + err.message);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    }
+
+    function setSaveState(btn, isSaved) {
+      if (isSaved) {
+        btn.innerHTML = "🔖 Saved";
+        btn.classList.add("active");
+      } else {
+        btn.innerHTML = "🔖 Save";
+        btn.classList.remove("active");
+      }
+    }
+
+    /* ══════════════════════════════════════
+       ── LIKE ──
+    ══════════════════════════════════════ */
+    async function toggleLike(feedId, btn, countEl) {
+      const data      = await api(`/likes/${feedId}`, { method: "POST" });
+      const countData = await api(`/likes/${feedId}/count`);
+      countEl.textContent = countData.likes + " likes";
+      btn.innerHTML       = data.liked ? "❤️ Liked" : "🤍 Like";
+      btn.classList.toggle("active", data.liked);
+    }
+
+    /* ══════════════════════════════════════
+       ── COMMENTS ──
+    ══════════════════════════════════════ */
+    async function loadComments(feedId, container) {
+      const data = await api(`/comments/${feedId}`);
       container.innerHTML = "";
 
       if (!data.comments.length) {
@@ -401,12 +621,11 @@
           <div class="reply-box"></div>
         `;
 
-        div.querySelector(".del").addEventListener("click", () => deleteComment(comment._id, postId, container));
+        div.querySelector(".del").addEventListener("click", () => deleteComment(comment._id, feedId, container));
         div.querySelector(".reply-toggle").addEventListener("click", function() {
-          toggleReplyInput(postId, comment._id, div.querySelector(".reply-box"));
+          toggleReplyInput(feedId, comment._id, div.querySelector(".reply-box"));
         });
 
-        /* nested replies */
         if (comment.replies?.length) {
           const repliesDiv = document.createElement("div");
           repliesDiv.className = "reply-container";
@@ -419,7 +638,7 @@
                 <button class="meta-btn del" data-id="${reply._id}">✕ Delete</button>
               </div>
             `;
-            r.querySelector(".del").addEventListener("click", () => deleteComment(reply._id, postId, container));
+            r.querySelector(".del").addEventListener("click", () => deleteComment(reply._id, feedId, container));
             repliesDiv.appendChild(r);
           });
           div.appendChild(repliesDiv);
@@ -429,40 +648,43 @@
       });
     }
 
-    function toggleReplyInput(postId, parentId, box) {
+    function toggleReplyInput(feedId, parentId, box) {
       if (box.innerHTML) { box.innerHTML = ""; return; }
       box.innerHTML = `<input placeholder="Reply…" /><button>Send</button>`;
       const input = box.querySelector("input");
       box.querySelector("button").onclick = async () => {
         if (!input.value.trim()) return;
-        await api(`/comments/${postId}`, {
+        await api(`/comments/${feedId}`, {
           method: "POST",
           body: JSON.stringify({ text: input.value.trim(), parentId }),
         });
-        loadComments(postId, box.closest(".comments-list"));
+        loadComments(feedId, box.closest(".comments-list"));
       };
     }
 
-    async function addComment(postId, input, container) {
+    async function addComment(feedId, input, container) {
       if (!input.value.trim()) return;
-      await api(`/comments/${postId}`, {
+      await api(`/comments/${feedId}`, {
         method: "POST",
         body: JSON.stringify({ text: input.value.trim() }),
       });
       input.value = "";
-      loadComments(postId, container);
+      loadComments(feedId, container);
     }
 
-    async function deleteComment(commentId, postId, container) {
+    async function deleteComment(commentId, feedId, container) {
       if (!confirm("Delete this comment?")) return;
       await api(`/comments/${commentId}`, { method: "DELETE" });
-      loadComments(postId, container);
+      loadComments(feedId, container);
     }
 
-    /* ── Build post card ── */
-    function buildPost(post) {
-      const postId = post._id;
-      const media  = post.media?.[0];
+    /* ══════════════════════════════════════
+       ── BUILD POST CARD ──
+    ══════════════════════════════════════ */
+    function buildPost(feed) {
+      const feedId   = feed._id;
+      const authorId = feed.userId?._id || feed.userId;
+      const media    = feed.media?.[0];
 
       const article = document.createElement("article");
       article.className = "post";
@@ -476,57 +698,80 @@
       article.innerHTML = `
         <div class="post-header">
           <div class="avatar">👤</div>
-          <span class="username">${post.userId?.userName || "Unknown"}</span>
+          <div class="post-author">
+            <span class="username">${feed.userId?.userName || "Unknown"}</span>
+            <button class="follow-btn" data-author="${authorId}">+ Follow</button>
+          </div>
         </div>
         ${mediaHTML}
-        ${post.caption ? `<div class="post-caption">${post.caption}</div>` : ""}
+        ${feed.caption ? `<div class="post-caption">${feed.caption}</div>` : ""}
         <div class="post-actions">
-          <button class="like-btn" id="like-${postId}">🤍 Like</button>
-          <span class="like-count" id="count-${postId}">0 likes</span>
+          <button class="action-btn like-btn" id="like-${feedId}">🤍 Like</button>
+          <span class="like-count" id="count-${feedId}">0 likes</span>
+          <button class="action-btn repost-btn" id="repost-${feedId}">🔁 Repost</button>
+          <button class="action-btn save-btn"   id="save-${feedId}">🔖 Save</button>
         </div>
         <div class="comment-box">
-          <input class="comment-input" id="input-${postId}" placeholder="Add a comment…" />
-          <button class="comment-send-btn" id="send-${postId}">Post</button>
+          <input class="comment-input" id="input-${feedId}" placeholder="Add a comment…" />
+          <button class="comment-send-btn" id="send-${feedId}">Post</button>
         </div>
-        <div class="comments-list" id="comments-${postId}"></div>
+        <div class="comments-list" id="comments-${feedId}"></div>
       `;
 
-      const likeBtn    = article.querySelector(`#like-${postId}`);
-      const countEl    = article.querySelector(`#count-${postId}`);
-      const input      = article.querySelector(`#input-${postId}`);
-      const sendBtn    = article.querySelector(`#send-${postId}`);
-      const commentBox = article.querySelector(`#comments-${postId}`);
+      /* wire up elements */
+      const likeBtn    = article.querySelector(`#like-${feedId}`);
+      const countEl    = article.querySelector(`#count-${feedId}`);
+      const repostBtn  = article.querySelector(`#repost-${feedId}`);
+      const saveBtn    = article.querySelector(`#save-${feedId}`);
+      const followBtn  = article.querySelector(`.follow-btn[data-author="${authorId}"]`);
+      const input      = article.querySelector(`#input-${feedId}`);
+      const sendBtn    = article.querySelector(`#send-${feedId}`);
+      const commentBox = article.querySelector(`#comments-${feedId}`);
 
-      likeBtn.addEventListener("click", () => toggleLike(postId, likeBtn, countEl));
-      sendBtn.addEventListener("click", () => addComment(postId, input, commentBox));
-      input.addEventListener("keydown", e => {
-        if (e.key === "Enter") addComment(postId, input, commentBox);
-      });
-
-      api(`/likes/${postId}/count`).then(d => {
+      /* Like */
+      likeBtn.addEventListener("click", () => toggleLike(feedId, likeBtn, countEl));
+      api(`/likes/${feedId}/count`).then(d => {
         countEl.textContent = d.likes + " likes";
       }).catch(() => {});
 
-      loadComments(postId, commentBox);
+      /* Follow */
+      if (authorId) initFollow(authorId, followBtn);
+
+      /* Repost */
+      initRepost(feedId, repostBtn);
+
+      /* Save */
+      initSave(feedId, saveBtn);
+
+      /* Comments */
+      sendBtn.addEventListener("click", () => addComment(feedId, input, commentBox));
+      input.addEventListener("keydown", e => {
+        if (e.key === "Enter") addComment(feedId, input, commentBox);
+      });
+      loadComments(feedId, commentBox);
 
       return article;
     }
 
-    /* ── Load feed ── */
+    /* ══════════════════════════════════════
+       ── LOAD FEED ──
+    ══════════════════════════════════════ */
     async function loadFeed() {
       const feedEl = document.getElementById("feed");
-
       try {
-        const data = await api("/feeds");
+        const response = await api("/feeds");
+        const feeds = response.data || [];
         feedEl.innerHTML = "";
 
-        if (!data.posts?.length) {
+        if (!feeds.length) {
           feedEl.innerHTML = `<div class="state-msg">No posts yet. Be the first!</div>`;
           return;
         }
 
-        data.posts.forEach(post => feedEl.appendChild(buildPost(post)));
+        feeds.forEach(feed => feedEl.appendChild(buildPost(feed)));
+
       } catch (err) {
+        console.error(err);
         feedEl.innerHTML = `<div class="state-msg">❌ Failed to load feed: ${err.message}</div>`;
       }
     }

@@ -2,9 +2,9 @@ import mongoose from "mongoose";
 
 const commentSchema = new mongoose.Schema(
   {
-    postId: {
+    feedId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Post",
+      ref: "Feed",
       required: true,
       index: true,
     },
@@ -55,7 +55,7 @@ const commentSchema = new mongoose.Schema(
 );
 
 // Indexes
-commentSchema.index({ postId: 1, createdAt: -1 });
+commentSchema.index({ feedId: 1, createdAt: -1 });
 commentSchema.index({ parentId: 1, createdAt: 1 });
 
 const Comment = mongoose.model("Comment", commentSchema);

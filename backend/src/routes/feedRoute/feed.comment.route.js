@@ -3,15 +3,15 @@ import { protectRoute } from "../../middleware/auth.middleware.js";
 
 import {
   createComment,
-  getPostComments,
+  getFeedComments,
   deleteComment,
   editComment,
-} from "../../controllers/post/comment.controller.js";
+} from "../../controllers/feedController/feed.comment.controller.js";
 
 const router = express.Router();
 
-router.post("/:postId", protectRoute, createComment);
-router.get("/:postId", getPostComments);
+router.post("/:feedId", protectRoute, createComment);
+router.get("/:feedId", getFeedComments);
 router.put("/:id", protectRoute, editComment);
 router.delete("/:id", protectRoute, deleteComment);
 

@@ -1,6 +1,5 @@
-import mongoose  from "mongoose";
 import express from "express";
-import {createStory, getStoriesFeed, getMyStories, viewStory, deleteStory} from "../../controllers/story/story.controller.js";
+import {createStory, getStoriesFeed, getMyStories, viewStory, deleteStory} from "../../controllers/storyController/story.controller.js";
 import { protectRoute } from "../../middleware/auth.middleware.js";
 import upload from "../../middleware/multer.middleware.js"; 
 const router = express.Router();

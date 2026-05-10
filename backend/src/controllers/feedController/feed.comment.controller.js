@@ -1,11 +1,11 @@
-import Comment from "../../models/posts/comment.model.js";
-import Post from "../../models/posts/post.model.js";
+import Comment from "../../models/feedModel/feed.comment.model.js";
+import Feed from "../../models/feedModel/feed.model.js";
 import TryCatch from "../../utils/Trycatch.js";
 
 //Create comment and reply
 export const createComment = TryCatch(async (req, res) => {
   const { text, parentId } = req.body;
-  const postId = req.params.postId;
+  const feedId = req.params.feedId;
   const userId = req.user._id;
 
   if (!text || !text.trim()) {
@@ -14,10 +14,10 @@ export const createComment = TryCatch(async (req, res) => {
     });
   }
 
-  const post = await Post.findById(postId);
-  if (!post) {
+  const feed = await Feed.findById(feedId);
+  if (!feed) {
     return res.status(404).json({
-      message: "Post not found",
+      message: "feed not found",
     });
   }
 
@@ -33,7 +33,7 @@ export const createComment = TryCatch(async (req, res) => {
   }
 
   const comment = await Comment.create({
-    postId,
+    feedId,
     userId,
     text,
     parentId: parentId || null,
@@ -48,7 +48,7 @@ export const createComment = TryCatch(async (req, res) => {
 
   const populatedComment = await comment.populate(
     "userId",
-    "userName avatar"
+    "userName profilePic firstName lastName"
   );
 
   res.status(201).json({
@@ -57,11 +57,11 @@ export const createComment = TryCatch(async (req, res) => {
   });
 });
 //Get comments and reply
-export const getPostComments = TryCatch(async (req, res) => {
-  const postId = req.params.postId;
+export const getFeedComments = TryCatch(async (req, res) => {
+  const feedId = req.params.feedId;
 
-  const comments = await Comment.find({ postId })
-    .populate("userId", "userName avatar")
+  const comments = await Comment.find({ feedId })
+    .populate("userId", "userName profilePic firstName lastName")
     .sort({ createdAt: -1 })
     .lean();
 
@@ -89,21 +89,16 @@ export const deleteComment = TryCatch(async (req, res) => {
     });
   }
 
-  const post = await Post.findById(comment.postId);
+  const feed = await Feed.findById(comment.feedId);
 
-  if (
-    comment.userId.toString() !== userId.toString() &&
-    post.userId.toString() !== userId.toString()
-  ) {
-    return res.status(403).json({
-      message: "Not allowed to delete this comment",
-    });
+  const isFeedOwner = feed && feed.userId.toString() === userId.toString();
+  if (comment.userId.toString() !== userId.toString() && !isFeedOwner) {
+    return res.status(403).json({ message: "Not allowed to delete this comment" });
   }
 
-  // 🔥 if it's a reply → decrease parent's replyCount
   if (comment.parentId) {
     await Comment.findByIdAndUpdate(comment.parentId, {
-      $inc: { replyCount: -1 },
+      $inc: { commentCount: -1 },
     });
   }
 
@@ -147,7 +142,7 @@ export const editComment = TryCatch(async (req, res) => {
 
   await comment.save();
 
-  const updated = await comment.populate("userId", "userName avatar");
+  const updated = await comment.populate("userId", "userName profilePic firstName lastName");
 
   res.json({
     message: "Comment updated",

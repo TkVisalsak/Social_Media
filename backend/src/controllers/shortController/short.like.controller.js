@@ -1,4 +1,4 @@
-import ShortVideo from "../../models/shortvideos/short.video.model.js";
+import ShortVideo from "../../models/shortvideosModel/short.video.model.js";
 import TryCatch from "../../utils/Trycatch.js";
 
 export const toggleShortLike = TryCatch(async (req, res) => {

@@ -1,10 +1,9 @@
-import ShortVideo from "../../models/shortvideos/short.video.model.js";
-import Comment from "../../models/posts/comment.model.js";
+import ShortVideo from "../../models/shortvideosModel/short.video.model.js";
+import ShortVideoComment from "../../models/shortvideosModel/short.comment.model.js";
 import TryCatch from "../../utils/Trycatch.js";
-
-//Create short video
 import { uploadToCloudinary } from "../../lib/uploadToCloudinary.js";
 
+//Create short video
 export const createShort = TryCatch(async (req, res) => {
   const { caption } = req.body;
   const userId = req.user._id;
@@ -47,10 +46,20 @@ export const addView = TryCatch(async (req, res) => {
   });
 });
 
-
-export const getShorts = async (req, res) => {
-  const videos = await ShortVideo.find()
-    .sort({ createdAt: -1 });
-
+export const getmyShorts = TryCatch(async (req, res) => {
+  const userId = req.user._id;
+  const videos = await ShortVideo.find({ userId }).sort({ createdAt: -1 });
   res.json({ videos });
-};
+});
+
+export const getAllShortByUserId = TryCatch(async (req, res) => {  
+  const userId = req.params.userId;
+  const videos = await ShortVideo.find({ userId }).sort({ createdAt: -1 });
+  res.json({ videos });
+});
+
+export const getShorts = TryCatch(async (req, res) => {
+  const videos = await ShortVideo.find().sort({ createdAt: -1 });
+  res.json({ videos });
+});
+

@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Collection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #080810;
+      --surface:      #10101a;
+      --surface2:     #16162a;
+      --border:       #22223a;
+      --accent:       #ff2d55;
+      --save-color:   #f5a623;
+      --save-lo:      rgba(245,166,35,.13);
+      --repost-color: #22d3a5;
+      --repost-lo:    rgba(34,211,165,.13);
+      --text:         #eeeef8;
+      --muted:        #6b6b88;
+      --radius:       16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      padding-bottom: 80px;
+      /* subtle grid texture */
+      background-image:
+        linear-gradient(rgba(255,45,85,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,45,85,.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* ── Header ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8,8,16,.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 60px;
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -.5px;
+    }
+    .logo span { color: var(--accent); }
+    .nav-link {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 20px;
+      transition: all .2s;
+    }
+    .nav-link:hover { color: var(--text); border-color: var(--muted); }
+
+    /* ── Page hero ── */
+    .hero {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 48px 20px 0;
+    }
+    .hero-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(32px, 6vw, 52px);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      margin-bottom: 32px;
+    }
+    .hero-title em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    /* ── Tab switcher ── */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 36px;
+      background: var(--surface);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 13px 20px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all .22s;
+      position: relative;
+    }
+    .tab-btn + .tab-btn {
+      border-left: 1px solid var(--border);
+    }
+    .tab-btn .tab-icon {
+      font-size: 16px;
+      transition: transform .22s;
+    }
+    .tab-btn:hover { color: var(--text); }
+
+    .tab-btn.active[data-tab="saved"] {
+      background: var(--save-lo);
+      color: var(--save-color);
+    }
+    .tab-btn.active[data-tab="reposts"] {
+      background: var(--repost-lo);
+      color: var(--repost-color);
+    }
+    .tab-btn.active .tab-icon { transform: scale(1.2); }
+
+    .tab-count {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: var(--border);
+      color: var(--muted);
+      min-width: 22px;
+      text-align: center;
+    }
+    .tab-btn.active[data-tab="saved"] .tab-count {
+      background: rgba(245,166,35,.22);
+      color: var(--save-color);
+    }
+    .tab-btn.active[data-tab="reposts"] .tab-count {
+      background: rgba(34,211,165,.18);
+      color: var(--repost-color);
+    }
+
+    /* ── Content panels ── */
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── Card grid ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    /* ── Post card ── */
+    .post-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      animation: riseIn .3s ease both;
+      transition: border-color .2s, transform .2s;
+    }
+    .post-card:hover {
+      border-color: var(--muted);
+      transform: translateY(-2px);
+    }
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* stagger animation delay */
+    .post-card:nth-child(1) { animation-delay: .04s; }
+    .post-card:nth-child(2) { animation-delay: .08s; }
+    .post-card:nth-child(3) { animation-delay: .12s; }
+    .post-card:nth-child(4) { animation-delay: .16s; }
+    .post-card:nth-child(5) { animation-delay: .20s; }
+
+    /* badge on card */
+    .card-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--border);
+      width: 100%;
+    }
+    .card-badge.saved   { color: var(--save-color);   background: var(--save-lo); }
+    .card-badge.reposted { color: var(--repost-color); background: var(--repost-lo); }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px 10px;
+    }
+    .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(255,45,85,.12);
+      border: 1.5px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+    .card-author {
+      flex: 1;
+    }
+    .author-name {
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .card-date {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* action button on card top-right */
+    .card-remove-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      padding: 5px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all .18s;
+      white-space: nowrap;
+    }
+    .card-remove-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .card-media img,
+    .card-media video {
+      width: 100%;
+      max-height: 360px;
+      object-fit: cover;
+      display: block;
+      background: var(--bg);
+    }
+
+    .card-caption {
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.55;
+      color: #c0c0d8;
+      border-top: 1px solid var(--border);
+    }
+
+    .card-footer {
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-top: 1px solid var(--border);
+    }
+    .footer-pill {
+      font-size: 12px;
+      color: var(--muted);
+      background: var(--surface2);
+      border-radius: 20px;
+      padding: 4px 10px;
+    }
+    .view-link {
+      margin-left: auto;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 5px 12px;
+      border-radius: 20px;
+      transition: all .18s;
+    }
+    .view-link:hover { color: var(--text); border-color: var(--muted); }
+
+    /* ── Empty / loading states ── */
+    .state-box {
+      text-align: center;
+      padding: 72px 20px;
+      color: var(--muted);
+    }
+    .state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: .5;
+    }
+    .state-box h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      color: var(--text);
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .state-box p { font-size: 14px; }
+
+    .spinner {
+      width: 30px; height: 30px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .65s linear infinite;
+      margin: 0 auto 14px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 22px;
+      border-radius: 30px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .25s, transform .25s;
+      z-index: 999;
+      white-space: nowrap;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .hero { padding-top: 32px; }
+      .hero-title { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <a class="logo" href="display.html">🔥 demo<span>-post</span></a>
+    <a class="nav-link" href="display.html">← Feed</a>
+  </header>
+
+  <main>
+    <div class="hero">
+      <p class="hero-label">My Collection</p>
+      <h1 class="hero-title">Saved &amp; <em>Reposted</em></h1>
+
+      <!-- Tabs -->
+      <div class="tabs" role="tablist">
+        <button class="tab-btn active" data-tab="saved" role="tab" aria-selected="true">
+          <span class="tab-icon">🔖</span>
+          Saved
+          <span class="tab-count" id="saved-count">–</span>
+        </button>
+        <button class="tab-btn" data-tab="reposts" role="tab" aria-selected="false">
+          <span class="tab-icon">🔁</span>
+          Reposts
+          <span class="tab-count" id="reposts-count">–</span>
+        </button>
+      </div>
+
+      <!-- Saved panel -->
+      <div class="panel active" id="panel-saved">
+        <div class="state-box">
+          <div class="spinner"></div>
+          Loading saved posts…
+        </div>
+      </div>
+
+      <!-- Reposts panel -->
+      <div class="panel" id="panel-reposts">
+        <div class="state-box">
+          <div class="spinner"></div>
+          Loading reposts…
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast"></div>
+
+  <script>
+    const API_BASE = "http://localhost:5001/api";
+
+    /* ── Auth ── */
+    function getToken() { return localStorage.getItem("token"); }
+    function getCurrentUserId() {
+      try {
+        const user = JSON.parse(localStorage.getItem("user"));
+        return user?._id || user?.id || null;
+      } catch { return null; }
+    }
+
+    if (!getToken()) {
+      alert("Please login first");
+      window.location.href = "/login.html";
+    }
+
+    /* ── Toast ── */
+    let toastTimer;
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove("show"), 2500);
+    }
+
+    /* ── API wrapper ── */
+    async function api(url, options = {}) {
+      const token = getToken();
+      const res = await fetch(API_BASE + url, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(options.headers || {}),
+        },
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || "Request failed");
+      return data;
+    }
+
+    /* ── Tab switching ── */
+    const tabBtns  = document.querySelectorAll(".tab-btn");
+    const panels   = document.querySelectorAll(".panel");
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        tabBtns.forEach(b => { b.classList.remove("active"); b.setAttribute("aria-selected", "false"); });
+        panels.forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        btn.setAttribute("aria-selected", "true");
+        document.getElementById(`panel-${btn.dataset.tab}`).classList.add("active");
+      });
+    });
+
+    /* ── Format date ── */
+    function fmtDate(iso) {
+      if (!iso) return "";
+      return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+
+    /* ══════════════════════════════════════
+       ── BUILD SAVED CARD ──
+    ══════════════════════════════════════ */
+    function buildSavedCard(item, onRemove) {
+      // item may wrap a feed object in item.contentId or item.feed or be the feed itself
+      const feed      = item.contentId || item.feed || item;
+      const feedId    = feed._id || item.contentId?._id || item._id;
+      const savedId   = item._id; // the save document id for deletion
+      const media     = feed.media?.[0];
+      const username  = feed.userId?.userName || "Unknown";
+      const caption   = feed.caption || "";
+      const savedAt   = item.createdAt || item.savedAt || "";
+
+      const card = document.createElement("div");
+      card.className = "post-card";
+
+      const mediaHTML = media
+        ? (media.type === "video"
+            ? `<div class="card-media"><video controls src="${media.url}"></video></div>`
+            : `<div class="card-media"><img src="${media.url}" alt="post image" loading="lazy" /></div>`)
+        : "";
+
+      card.innerHTML = `
+        <div class="card-badge saved">🔖 Saved</div>
+        <div class="card-header">
+          <div class="avatar">👤</div>
+          <div class="card-author">
+            <div class="author-name">${username}</div>
+            ${savedAt ? `<div class="card-date">Saved ${fmtDate(savedAt)}</div>` : ""}
+          </div>
+          <button class="card-remove-btn" data-id="${savedId || feedId}">✕ Unsave</button>
+        </div>
+        ${mediaHTML}
+        ${caption ? `<div class="card-caption">${caption}</div>` : ""}
+        <div class="card-footer">
+          <span class="footer-pill">📄 Post</span>
+          <a class="view-link" href="display.html">View feed →</a>
+        </div>
+      `;
+
+      card.querySelector(".card-remove-btn").addEventListener("click", async (e) => {
+        const id = e.currentTarget.dataset.id;
+        try {
+          await api(`/save/${id}`, { method: "DELETE" });
+          card.style.transition = "opacity .25s, transform .25s";
+          card.style.opacity = "0";
+          card.style.transform = "scale(.97)";
+          setTimeout(() => { card.remove(); onRemove(); }, 260);
+          showToast("Removed from saved");
+        } catch (err) {
+          showToast("❌ " + err.message);
+        }
+      });
+
+      return card;
+    }
+
+    /* ══════════════════════════════════════
+       ── BUILD REPOST CARD ──
+    ══════════════════════════════════════ */
+    function buildRepostCard(item, onRemove) {
+      const feed      = item.contentId || item.feed || item;
+      const repostId  = item._id;
+      const media     = feed.media?.[0];
+      const username  = feed.userId?.userName || "Unknown";
+      const caption   = feed.caption || "";
+      const repostedAt = item.createdAt || "";
+
+      const card = document.createElement("div");
+      card.className = "post-card";
+
+      const mediaHTML = media
+        ? (media.type === "video"
+            ? `<div class="card-media"><video controls src="${media.url}"></video></div>`
+            : `<div class="card-media"><img src="${media.url}" alt="post image" loading="lazy" /></div>`)
+        : "";
+
+      card.innerHTML = `
+        <div class="card-badge reposted">🔁 Reposted</div>
+        <div class="card-header">
+          <div class="avatar">👤</div>
+          <div class="card-author">
+            <div class="author-name">${username}</div>
+            ${repostedAt ? `<div class="card-date">Reposted ${fmtDate(repostedAt)}</div>` : ""}
+          </div>
+          <button class="card-remove-btn" data-id="${repostId}">✕ Undo</button>
+        </div>
+        ${mediaHTML}
+        ${caption ? `<div class="card-caption">${caption}</div>` : ""}
+        <div class="card-footer">
+          <span class="footer-pill">🔁 Repost</span>
+          <a class="view-link" href="display.html">View feed →</a>
+        </div>
+      `;
+
+      card.querySelector(".card-remove-btn").addEventListener("click", async (e) => {
+        const id = e.currentTarget.dataset.id;
+        try {
+          await api(`/repost/${id}`, { method: "DELETE" });
+          card.style.transition = "opacity .25s, transform .25s";
+          card.style.opacity = "0";
+          card.style.transform = "scale(.97)";
+          setTimeout(() => { card.remove(); onRemove(); }, 260);
+          showToast("Repost removed");
+        } catch (err) {
+          showToast("❌ " + err.message);
+        }
+      });
+
+      return card;
+    }
+
+    /* ── Update count badge ── */
+    function updateCount(id, n) {
+      document.getElementById(id).textContent = n > 0 ? n : "0";
+    }
+
+    /* ── Empty state ── */
+    function emptyState(icon, title, subtitle) {
+      return `
+        <div class="state-box">
+          <div class="state-icon">${icon}</div>
+          <h3>${title}</h3>
+          <p>${subtitle}</p>
+        </div>
+      `;
+    }
+
+    /* ══════════════════════════════════════
+       ── LOAD SAVED ──
+    ══════════════════════════════════════ */
+    async function loadSaved() {
+      const panel = document.getElementById("panel-saved");
+      try {
+        const data  = await api("/save/");
+        const items = data.savedItems || data.data || data || [];
+
+        updateCount("saved-count", items.length);
+
+        if (!items.length) {
+          panel.innerHTML = emptyState("🔖", "Nothing saved yet", "Tap Save on any post to collect it here.");
+          return;
+        }
+
+        panel.innerHTML = "";
+        const grid = document.createElement("div");
+        grid.className = "cards-grid";
+
+        const recalc = () => updateCount("saved-count", grid.querySelectorAll(".post-card").length);
+
+        items.forEach(item => grid.appendChild(buildSavedCard(item, recalc)));
+        panel.appendChild(grid);
+
+      } catch (err) {
+        console.error(err);
+        panel.innerHTML = `<div class="state-box"><p>❌ Failed to load saved posts: ${err.message}</p></div>`;
+      }
+    }
+
+    /* ══════════════════════════════════════
+       ── LOAD REPOSTS ──
+    ══════════════════════════════════════ */
+    async function loadReposts() {
+      const panel = document.getElementById("panel-reposts");
+      const userId = getCurrentUserId();
+
+      if (!userId) {
+        panel.innerHTML = emptyState("⚠️", "User ID not found", "Make sure your userId is stored in localStorage after login.");
+        return;
+      }
+
+      try {
+        const data  = await api(`/repost/user/${userId}`);
+        const items = data.reposts || data.data || data || [];
+
+        updateCount("reposts-count", items.length);
+
+        if (!items.length) {
+          panel.innerHTML = emptyState("🔁", "No reposts yet", "Repost something from your feed and it'll show up here.");
+          return;
+        }
+
+        panel.innerHTML = "";
+        const grid = document.createElement("div");
+        grid.className = "cards-grid";
+
+        const recalc = () => updateCount("reposts-count", grid.querySelectorAll(".post-card").length);
+
+        items.forEach(item => grid.appendChild(buildRepostCard(item, recalc)));
+        panel.appendChild(grid);
+
+      } catch (err) {
+        console.error(err);
+        panel.innerHTML = `<div class="state-box"><p>❌ Failed to load reposts: ${err.message}</p></div>`;
+      }
+    }
+
+    /* ── Boot ── */
+    loadSaved();
+    loadReposts();
+  </script>
+</body>
+</html>

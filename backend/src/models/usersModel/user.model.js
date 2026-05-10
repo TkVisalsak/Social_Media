@@ -36,10 +36,24 @@ const  userSchema = new mongoose.Schema(
         type: String,
         default: "",
     },
+    bio:{
+        type: String,
+        default: "",
+    },
 
 },
     {timestamps: true}
 );
+
+
+userSchema.virtual("fullName").get(function () {
+  return `${this.firstName} ${this.lastName}`.trim();
+});
+
+
+userSchema.set("toJSON", {
+  virtuals: true,
+});
 
 const User = mongoose.model("User",userSchema);
 

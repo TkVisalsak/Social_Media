@@ -3,12 +3,12 @@ import { protectRoute } from "../../middleware/auth.middleware.js";
 import upload from "../../middleware/multer.middleware.js";
 
 import {
-  createPost,
-  getFeedPosts,
-  getPostById,
-  deletePost,
+  createFeed,
+  getUserFeed,
+  getFeedById,
+  deleteFeed,
   updateCaption,
-} from "../../controllers/post/post.controller.js";
+} from "../../controllers/feedController/feed.controller.js";
 
 const router = express.Router();
 
@@ -17,19 +17,19 @@ router.post(
   "/",
   protectRoute,
   upload.single("file"),
-  createPost
+  createFeed
 );
 
  
-router.get("/", protectRoute, getFeedPosts);
+router.get("/", protectRoute, getUserFeed);
 
  
-router.get("/:id", protectRoute, getPostById);
+router.get("/:id", protectRoute, getFeedById);
 
  
 router.put("/:id", protectRoute, updateCaption);
  
-router.delete("/:id", protectRoute, deletePost);
+router.delete("/:id", protectRoute, deleteFeed);
 
 
 export default router;

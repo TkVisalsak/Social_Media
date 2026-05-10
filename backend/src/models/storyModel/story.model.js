@@ -42,7 +42,7 @@ const strorySchema = new mongoose.Schema(
 
   visibility: {
     type: String,
-    enum: ["public", "friends"],
+    enum: ["public", "friends", "private", "followers"],
     default: "public",
   },
 

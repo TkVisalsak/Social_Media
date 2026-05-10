@@ -1,196 +1,242 @@
-import { generateToken } from "../../lib/utils.js";
-import User from "../../models/users/user.model.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  generateResetToken,
+  verifyRefreshToken,
+  verifyResetToken,
+} from "../../lib/utils.js";
+import User from "../../models/usersModel/user.model.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../../lib/cloudinary.js";
+import getDataUrl from "../../utils/urlGenrator.js";
+import TryCatch from "../../utils/Trycatch.js";
 
-export const signup = async (req, res) => {
-  try {
-    const { userName, email, password } = req.body;
+const sanitizeUser = (u) => ({
+  _id: u._id,
+  userName: u.userName,
+  email: u.email,
+  profilePic: u.profilePic,
+  firstName: u.firstName,
+  lastName: u.lastName,
+  bio: u.bio,
+});
 
-    if (!userName || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
+export const signup = TryCatch(async (req, res) => {
+  const { userName, email, password } = req.body;
 
-    if (password.length < 6) {
-      return res.status(400).json({
-        message: "Password must be at least 6 characters",
-      });
-    }
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: "Email already exists" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = await User.create({
-      userName,
-      email,
-      password: hashedPassword,
-    });
-
-    const token = generateToken(newUser._id);
-
-    res.status(201).json({
-      accessToken: token,
-      user: {
-        _id: newUser._id,
-        userName: newUser.userName,
-        email: newUser.email,
-        profilePic: newUser.profilePic,
-      },
-    });
-  } catch (error) {
-    console.log("Signup error:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+  if (!userName || !email || !password) {
+    return res.status(400).json({ success: false, message: "All fields are required" });
   }
-};
+  if (password.length < 8) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Password must be at least 8 characters" });
+  }
 
-export const login = async (req, res) => {
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return res.status(400).json({ success: false, message: "Email already exists" });
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 12);
+  const newUser = await User.create({ userName, email, password: hashedPassword });
+
+  const accessToken = generateAccessToken(newUser._id);
+  const refreshToken = generateRefreshToken(newUser._id);
+
+  res.status(201).json({
+    success: true,
+    accessToken,
+    refreshToken,
+    user: sanitizeUser(newUser),
+  });
+});
+
+export const login = TryCatch(async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: "Email and password are required" });
+  }
+
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(400).json({ success: false, message: "Invalid email or password" });
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+  if (!isMatch) {
+    return res.status(400).json({ success: false, message: "Invalid email or password" });
+  }
+
+  const accessToken = generateAccessToken(user._id);
+  const refreshToken = generateRefreshToken(user._id);
+
+  res.status(200).json({
+    success: true,
+    accessToken,
+    refreshToken,
+    user: sanitizeUser(user),
+  });
+});
+
+export const logout = TryCatch(async (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  });
+  res.json({ success: true, message: "Logged out" });
+});
+
+export const refresh = TryCatch(async (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Refresh token is required" });
+  }
+
+  let decoded;
   try {
-    const { email, password } = req.body;
+    decoded = verifyRefreshToken(refreshToken);
+  } catch {
+    return res.status(401).json({ success: false, message: "Invalid refresh token" });
+  }
 
-    const user = await User.findOne({ email });
+  if (decoded.type !== "refresh") {
+    return res.status(401).json({ success: false, message: "Wrong token type" });
+  }
 
-    if (!user) {
-      return res.status(400).json({
-        message: "Invalid email or password",
-      });
-    }
+  const user = await User.findById(decoded.userId).select("_id");
+  if (!user) {
+    return res.status(401).json({ success: false, message: "User no longer exists" });
+  }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+  const accessToken = generateAccessToken(user._id);
+  res.json({ success: true, accessToken });
+});
 
-    if (!isMatch) {
-      return res.status(400).json({
-        message: "Invalid email or password",
-      });
-    }
+/**
+ * Generate a password reset token. In production this token would be
+ * emailed to the user (e.g. via SendGrid). For now we log it server-side
+ * and return a generic message to prevent account enumeration.
+ */
+export const forgotPassword = TryCatch(async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, message: "Email is required" });
+  }
 
-    const token = generateToken(user._id);
+  const user = await User.findOne({ email }).select("_id");
+  if (user) {
+    const resetToken = generateResetToken(user._id);
+    // TODO: send email with link containing resetToken
+    console.log(`[forgotPassword] reset token for ${email}: ${resetToken}`);
+  }
 
-    res.status(200).json({
-      accessToken: token,
-      user: {
-        _id: user._id,
-        userName: user.userName,
-        email: user.email,
-        profilePic: user.profilePic,
-      },
+  // Always respond 200 — don't leak whether the email exists.
+  res.json({
+    success: true,
+    message: "If that email exists, a reset link has been sent",
+  });
+});
+
+export const resetPassword = TryCatch(async (req, res) => {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Token and new password are required" });
+  }
+  if (newPassword.length < 8) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Password must be at least 8 characters" });
+  }
+
+  let decoded;
+  try {
+    decoded = verifyResetToken(token);
+  } catch {
+    return res
+      .status(401)
+      .json({ success: false, message: "Invalid or expired reset token" });
+  }
+
+  if (decoded.type !== "reset") {
+    return res.status(401).json({ success: false, message: "Wrong token type" });
+  }
+
+  const hashed = await bcrypt.hash(newPassword, 12);
+  await User.findByIdAndUpdate(decoded.userId, { password: hashed });
+
+  res.json({ success: true, message: "Password reset successful" });
+});
+
+export const personal_info = TryCatch(async (req, res) => {
+  const { firstName, lastName, dob, gender, bio } = req.body;
+  const userId = req.user._id;
+
+  const update = {};
+  if (firstName !== undefined) update.firstName = firstName;
+  if (lastName !== undefined) update.lastName = lastName;
+  if (dob !== undefined) update.dob = dob;
+  if (gender !== undefined) update.gender = gender;
+  if (bio !== undefined) update.bio = bio;
+
+  await User.findByIdAndUpdate(userId, update);
+  res.json({ success: true, message: "Profile updated" });
+});
+
+/**
+ * Update profile picture via multipart upload (multer puts the file on
+ * `req.file`). Backwards-compatible: if a base64 `profilePic` is sent in
+ * the body instead, it still works.
+ */
+export const updateProfile = TryCatch(async (req, res) => {
+  const userId = req.user._id;
+  let secureUrl;
+
+  if (req.file) {
+    const fileUrl = getDataUrl(req.file);
+    const upload = await cloudinary.uploader.upload(fileUrl.content, {
+      folder: "profile_pics",
     });
-  } catch (error) {
-    console.log("Login error:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-export const logout = async (req, res) => {
-  try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+    secureUrl = upload.secure_url;
+  } else if (req.body.profilePic && req.body.profilePic.startsWith("data:image")) {
+    const upload = await cloudinary.uploader.upload(req.body.profilePic, {
+      folder: "profile_pics",
     });
-    res.json({ message: "Logged out" });
-  } catch (error) {
-    console.log("Logout error:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
+    secureUrl = upload.secure_url;
+  } else {
+    return res.status(400).json({ success: false, message: "No image provided" });
   }
-};
 
-export const personal_info = async (req, res) => {
-  try {
-    const { firstName, lastName, dob, gender } = req.body;
-    const userId = req.user._id;
+  const updatedUser = await User.findByIdAndUpdate(
+    userId,
+    { profilePic: secureUrl },
+    { new: true }
+  ).select("-password");
 
-    if (!firstName || !lastName || !dob) {
-      return res.status(400).json({
-        message: "All fields are required",
-      });
-    }
-
-    const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-
-    user.firstName = firstName;
-    user.lastName = lastName;
-    user.dob = dob;
-    user.gender = gender;
-
-    await user.save();
-
-    res.json({
-      message: "Personal info updated",
-    });
-  } catch (error) {
-    console.log("Personal info error:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-export const updateProfile = async (req, res) => {
-  try {
-    const { profilePic } = req.body;
-    const userId = req.user._id;
-
-    if (!profilePic || !profilePic.startsWith("data:image")) {
-      return res.status(400).json({
-        message: "Invalid image format",
-      });
-    }
-
-    const upload = await cloudinary.uploader.upload(profilePic);
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { profilePic: upload.secure_url },
-      { new: true }
-    );
-
-    res.json(updatedUser);
-  } catch (error) {
-    console.log("Update profile error:", error.message);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
+  res.json({ success: true, data: sanitizeUser(updatedUser) });
+});
 
 export const checkAuth = (req, res) => {
-  res.json(req.user);
+  res.json({ success: true, data: sanitizeUser(req.user) });
 };
-export const getUserById = async (req, res) => {
-  try {
-    const { id } = req.params;
 
-    const user = await User.findById(id).select("-password");
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.status(200).json(user);
-  } catch (error) {
-    console.error("Error in getUserById:", error.message);
-    res.status(500).json({ error: "Internal server error" });
+export const getUserById = TryCatch(async (req, res) => {
+  const { id } = req.params;
+  const user = await User.findById(id).select("-password");
+  if (!user) {
+    return res.status(404).json({ success: false, message: "User not found" });
   }
-};
-export const getMe = async (req, res) => {
-  try {
-    // req.user is already set by your auth middleware
-    const user = req.user;
+  res.status(200).json({ success: true, data: sanitizeUser(user) });
+});
 
-    if (!user) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-
-    res.status(200).json({
-      user,
-    });
-  } catch (error) {
-    console.error("Error in getMe:", error.message);
-    res.status(500).json({ error: "Internal server error" });
+export const getMe = TryCatch(async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: "Unauthorized" });
   }
-};
+  res.status(200).json({ success: true, data: sanitizeUser(req.user) });
+});

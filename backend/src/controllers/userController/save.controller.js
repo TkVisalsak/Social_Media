@@ -1,12 +1,12 @@
-import Save from "../../models/users/save.model.js";
+import Save from "../../models/usersModel/save.model.js";
 import TryCatch from "../../utils/Trycatch.js";
 
 // SAVE ITEM
 export const saveItem = TryCatch(async (req, res) => {
   const userId = req.user._id;
-  const { itemId, itemType } = req.body;
+  const { contentId, contentType } = req.body;
 
-  const existing = await Save.findOne({ userId, itemId, itemType });
+  const existing = await Save.findOne({ userId, contentId, contentType });
 
   if (existing) {
     return res.status(400).json({ message: "Already saved" });
@@ -14,8 +14,8 @@ export const saveItem = TryCatch(async (req, res) => {
 
   const saved = await Save.create({
     userId,
-    itemId,
-    itemType,
+    contentId,
+    contentType,
   });
 
   res.status(201).json({
@@ -27,18 +27,18 @@ export const saveItem = TryCatch(async (req, res) => {
 // UNSAVE ITEM
 export const unsaveItem = TryCatch(async (req, res) => {
   const userId = req.user._id;
-  const { itemId } = req.params;
+  const { contentId } = req.params;
 
-  await Save.findOneAndDelete({ userId, itemId });
+  await Save.findOneAndDelete({ userId, contentId });
 
   res.json({ message: "Removed from saved" });
 });
 
 // GET USER SAVED ITEMS
 export const getSavedItems = TryCatch(async (req, res) => {
-  const userId = req.user._id;
+  const { user } = req.params;
 
-  const saved = await Save.find({ userId }).sort({ createdAt: -1 });
+  const saved = await Save.find({ userId: user }).sort({ createdAt: -1 });
 
   res.json({ saved });
 });
@@ -46,9 +46,10 @@ export const getSavedItems = TryCatch(async (req, res) => {
 // CHECK IF SAVED
 export const checkSaved = TryCatch(async (req, res) => {
   const userId = req.user._id;
-  const { itemId } = req.params;
+  const { contentId } = req.params;
+  const { contentType } = req.query;
 
-  const exists = await Save.findOne({ userId, itemId });
+  const exists = await Save.findOne({ userId, contentId, contentType });
 
   res.json({ saved: !!exists });
 });

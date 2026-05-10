@@ -6,8 +6,9 @@ import { checkAuth } from "../../controllers/authController/auth.controller.js";
 const router = express.Router();
 
 router.get("/users", protectRoute, getUsersForSidebar);
-router.get("/:id", protectRoute, getMessages);
+router.get("/check", protectRoute, checkAuth);       // specific before /:id
+router.get("/:id",   protectRoute, getMessages);
 
 router.post("/send/:id", protectRoute, sendMessage);
-router.get("/check", protectRoute, checkAuth);
+
 export default router;

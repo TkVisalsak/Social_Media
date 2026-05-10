@@ -1,30 +1,17 @@
 import { Server } from "socket.io";
-import Conversation from "../models/messages/conversation.model.js";
-import Message      from "../models/messages/message.model.js";
-import Follow       from "../models/users/follow.model.js";
-import http from "http";
-import express from "express";
+import Conversation from "../models/messagesModel/conversation.model.js";
+import Message      from "../models/messagesModel/message.model.js";
+import Follow       from "../models/usersModel/follow.model.js";
 
-const app = express();
-const server = http.createServer(app);
-
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  "http://localhost:3000",
-  "http://127.0.0.1:3000",
-  "http://localhost:5501",
-  "http://localhost:5502",
-  "http://127.0.0.1:5501",
-  "http://127.0.0.1:5502",
-].filter(Boolean);
-
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-  },
-});
 // userId → Set of socketIds (one user can have multiple tabs)
 const onlineUsers = new Map();
+
+// module-level io — populated by initSocket, exported for controllers
+export let io = null;
+
+export function getReceiverSocketIds(userId) {
+  return [...(onlineUsers.get(String(userId)) || [])];
+}
 
 async function areFriends(a, b) {
   const [x, y] = await Promise.all([
@@ -35,7 +22,7 @@ async function areFriends(a, b) {
 }
 
 export function initSocket(server) {
-  const io = new Server(server, {
+  io = new Server(server, {
     cors: { origin: process.env.CLIENT_URL || "*", credentials: true },
   });
 
@@ -57,13 +44,9 @@ export function initSocket(server) {
     // ── SEND MESSAGE ──────────────────────────────────────────────
     socket.on("sendMessage", async ({ conversationId, text, image }) => {
       try {
-        const conv = await Conversation.findOne({
-          _id: conversationId,
-          members: userId,
-        });
+        const conv = await Conversation.findOne({ _id: conversationId, members: userId });
         if (!conv) return socket.emit("error", "Not a member of this conversation");
 
-        // for 1-to-1: enforce friend check
         if (!conv.isGroup) {
           const otherId = conv.members.find((m) => m.toString() !== userId);
           const friend  = await areFriends(userId, otherId);
@@ -77,19 +60,13 @@ export function initSocket(server) {
           senderId: userId,
           text,
           image,
-          readBy: [userId], // sender has read their own message
+          readBy: [userId],
         });
 
-        // update conversation's lastMessage + updatedAt (for sidebar sorting)
-        await Conversation.findByIdAndUpdate(conversationId, {
-          lastMessage: message._id,
-        });
+        await Conversation.findByIdAndUpdate(conversationId, { lastMessage: message._id });
 
-        const populated = await message.populate("senderId", "username avatar");
-
-        // emit to everyone in the room (including sender)
+        const populated = await message.populate("senderId", "userName profilePic");
         io.to(conversationId).emit("newMessage", populated);
-
       } catch (err) {
         socket.emit("error", err.message);
       }
@@ -102,7 +79,6 @@ export function initSocket(server) {
           { conversationId, readBy: { $ne: userId } },
           { $push: { readBy: userId } }
         );
-        // tell others in room this user has read
         socket.to(conversationId).emit("messagesRead", { conversationId, userId });
       } catch (err) {
         socket.emit("error", err.message);
@@ -110,11 +86,11 @@ export function initSocket(server) {
     });
 
     // ── TYPING ──────────────────────────────────────────────────
-    socket.on("typing",      ({ conversationId }) =>
-      socket.to(conversationId).emit("userTyping",      { conversationId, userId }));
+    socket.on("typing",     ({ conversationId }) =>
+      socket.to(conversationId).emit("userTyping",       { conversationId, userId }));
 
-    socket.on("stopTyping",  ({ conversationId }) =>
-      socket.to(conversationId).emit("userStoppedTyping",{ conversationId, userId }));
+    socket.on("stopTyping", ({ conversationId }) =>
+      socket.to(conversationId).emit("userStoppedTyping", { conversationId, userId }));
 
     // ── DISCONNECT ───────────────────────────────────────────────
     socket.on("disconnect", () => {

@@ -1,18 +1,18 @@
-import Like from "../../models/posts/like.model.js";
-import Post from "../../models/posts/post.model.js";
+import Like from "../../models/feedModel/feed.like.model.js";
+import Feed from "../../models/feedModel/feed.model.js";
 import TryCatch from "../../utils/Trycatch.js";
 
-//like and unlike post
+//like and unlike feed
 export const toggleLike = TryCatch(async (req, res) => {
   const userId = req.user._id;
-  const postId = req.params.id;
+  const feedId = req.params.id;
 
-  const post = await Post.findById(postId);
-  if (!post) {
-    return res.status(404).json({ message: "Post not found" });
+  const feed = await Feed.findById(feedId);
+  if (!feed) {
+    return res.status(404).json({ message: "Feed not found" });
   }
 
-  const deleted = await Like.findOneAndDelete({ userId, postId });
+  const deleted = await Like.findOneAndDelete({ userId, feedId });
 
   // If something was deleted → it was liked → now unliked
   if (deleted) {
@@ -24,7 +24,7 @@ export const toggleLike = TryCatch(async (req, res) => {
 
   // Otherwise → create like
   try {
-    await Like.create({ userId, postId });
+    await Like.create({ userId, feedId });
 
     return res.json({
       message: "Liked",
@@ -41,23 +41,23 @@ export const toggleLike = TryCatch(async (req, res) => {
     throw err;
   }
 });
-export const getPostLikes = TryCatch(async (req, res) => {
-  const postId = req.params.id;
+export const getFeedLikes = TryCatch(async (req, res) => {
+  const feedId = req.params.id;
 
-  const count = await Like.countDocuments({ postId });
+  const count = await Like.countDocuments({ feedId });
 
   res.json({
-    postId,
+    feedId,
     likes: count,
   });
 });
 export const checkUserLike = TryCatch(async (req, res) => {
   const userId = req.user._id;
-  const postId = req.params.id;
+  const feedId = req.params.id;
 
   const liked = await Like.findOne({
     userId,
-    postId,
+    feedId,
   });
 
   res.json({
