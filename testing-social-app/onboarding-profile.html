@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Create your profile</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --blue:#2563eb;
+    --blue-dark:#1d4ed8;
+    --text:#0f172a;
+    --muted:#64748b;
+    --border:#e2e8f0;
+    --bg:#f8fafc;
+  }
+  body{
+    font-family:'DM Sans',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:24px;
+  }
+  .phone{
+    width:100%;
+    max-width:360px;
+    background:#fff;
+    border-radius:32px;
+    padding:32px 24px;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 4px 24px rgba(15,23,42,.06);
+  }
+  h1{color:var(--blue);font-size:24px;text-align:center;margin-bottom:24px}
+  .avatar-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:20px}
+  .avatar{
+    width:96px;height:96px;border-radius:50%;background:#dbeafe;
+    display:flex;align-items:center;justify-content:center;
+    font-size:54px;color:#1e40af;position:relative;cursor:pointer;
+    background-size:cover;background-position:center;
+  }
+  .avatar .plus{
+    position:absolute;bottom:0;right:0;width:28px;height:28px;
+    background:var(--blue);color:#fff;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;font-size:18px;
+    border:2px solid #fff;
+  }
+  .avatar-wrap .lbl{margin-top:8px;color:var(--blue);font-size:14px;font-weight:600}
+  .field{
+    border:1px solid var(--border);border-radius:8px;
+    padding:10px 12px;margin-bottom:14px;
+    display:flex;flex-direction:column;
+  }
+  .field label{font-size:12px;color:var(--muted)}
+  .field input,.field textarea{
+    border:none;outline:none;width:100%;background:transparent;
+    font-family:inherit;font-size:14px;color:var(--text);
+    padding:4px 0;resize:none;
+  }
+  .btn{
+    width:100%;padding:14px;background:var(--blue);color:#fff;
+    border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;
+    margin-top:6px;
+  }
+  .btn:hover{background:var(--blue-dark)}
+  .back{margin-top:auto;text-align:center;color:var(--blue);text-decoration:none;font-size:14px;padding-top:32px}
+  .err{color:#dc2626;font-size:13px;text-align:center;margin:8px 0;min-height:18px}
+  #fileInput{display:none}
+</style>
+</head>
+<body>
+  <div class="phone">
+    <h1>Let's create your profile</h1>
+
+    <div class="avatar-wrap">
+      <div class="avatar" id="avatar">
+        <span id="avatarIcon">👤</span>
+        <div class="plus">+</div>
+      </div>
+      <div class="lbl">Add profile photo</div>
+      <input type="file" id="fileInput" accept="image/*" />
+    </div>
+
+    <div class="field"><label>First name</label><input id="firstName" /></div>
+    <div class="field"><label>Last name</label><input id="lastName" /></div>
+    <div class="field"><label>Bio</label><textarea id="bio" rows="2"></textarea></div>
+    <div class="field"><label>Phone number</label><input id="phoneNumber" type="tel" placeholder="+855..." /></div>
+
+    <div class="err" id="err"></div>
+    <button class="btn" id="next">Next</button>
+    <a class="back" href="onboarding-gender.html">← Go back</a>
+  </div>
+
+<script>
+const API_BASE = "http://localhost:5001/api";
+const token = localStorage.getItem("token");
+if (!token) location.href = "login.html";
+
+const avatar = document.getElementById("avatar");
+const fileInput = document.getElementById("fileInput");
+let pickedFile = null;
+
+avatar.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", () => {
+  pickedFile = fileInput.files[0];
+  if (!pickedFile) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    avatar.style.backgroundImage = `url(${e.target.result})`;
+    document.getElementById("avatarIcon").style.display = "none";
+  };
+  reader.readAsDataURL(pickedFile);
+});
+
+document.getElementById("next").addEventListener("click", async () => {
+  const err = document.getElementById("err");
+  err.textContent = "";
+  const firstName = document.getElementById("firstName").value.trim();
+  const lastName  = document.getElementById("lastName").value.trim();
+  const bio       = document.getElementById("bio").value.trim();
+  const phoneNumber = document.getElementById("phoneNumber").value.trim();
+
+  if (!firstName || !lastName) { err.textContent = "First and last name are required"; return; }
+
+  try {
+    const r = await fetch(API_BASE + "/auth/personal_info", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ firstName, lastName, bio, phoneNumber }),
+    });
+    const data = await r.json();
+    if (!r.ok) { err.textContent = data.message || "Failed to save"; return; }
+
+    if (pickedFile) {
+      const fd = new FormData();
+      fd.append("profilePic", pickedFile);
+      await fetch(API_BASE + "/auth/update-profile", {
+        method: "PUT",
+        headers: { Authorization: "Bearer " + token },
+        body: fd,
+      });
+    }
+    location.href = "onboarding-hobby.html";
+  } catch { err.textContent = "Server error"; }
+});
+</script>
+</body>
+</html>

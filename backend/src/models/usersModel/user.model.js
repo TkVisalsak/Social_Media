@@ -40,6 +40,15 @@ const  userSchema = new mongoose.Schema(
         type: String,
         default: "",
     },
+    phoneNumber:{
+        type: String,
+        default: "",
+    },
+    hobbies: {
+        type: [String],
+        default: [],
+        index: true,
+    },
 
 },
     {timestamps: true}

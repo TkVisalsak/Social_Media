@@ -94,6 +94,17 @@
 
 ---
 
+## Hobbies & friend suggestions — `/api/hobbies`
+
+| Method | Path | Auth | Description |
+|--------|------|------|---------------|
+| GET | `/` | — | Catalog of available hobbies (auto-seeded on first call). |
+| GET | `/me` | Bearer | Current user's selected hobbies. |
+| POST | `/me` | Bearer | Body: `hobbies: string[]`. Replaces user's hobby list. Unknown names are dropped. |
+| GET | `/suggestions` | Bearer | Query: `min` (default 3), `limit` (default 20). Returns users sharing ≥`min` hobbies, excluding self and already-followed users. Sorted by `matchCount` desc. |
+
+---
+
 ## Shorts — comments `/api/shorts/comments`
 
 | Method | Path | Auth | Description |
@@ -154,4 +165,9 @@ GET    /api/shorts/comments/:shortId
 POST   /api/shorts/comments/:commentId/reply
 PUT    /api/shorts/comments/:id
 DELETE /api/shorts/comments/:id
+
+GET    /api/hobbies
+GET    /api/hobbies/me
+POST   /api/hobbies/me
+GET    /api/hobbies/suggestions
 ```

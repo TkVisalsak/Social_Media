@@ -24,6 +24,7 @@ import shortCommentRoutes from "./routes/shortRoute/short.comment.route.js";
 import followRoutes from "./routes/userRoute/follow.route.js";
 import saveRoutes from "./routes/userRoute/save.route.js";
 import repostRoutes from "./routes/userRoute/repost.route.js";
+import hobbyRoutes from "./routes/userRoute/hobby.route.js";
 import storyRoutes from "./routes/storyRoute/story.route.js";
 
 dotenv.config();
@@ -96,6 +97,7 @@ app.use("/api/shorts/comments", shortCommentRoutes);
 app.use("/api/follow", followRoutes);
 app.use("/api/save", saveRoutes);
 app.use("/api/repost", repostRoutes);
+app.use("/api/hobbies", hobbyRoutes);
 app.use("/api/story", storyRoutes);
 
 // ── 404 ──────────────────────────────────────────────

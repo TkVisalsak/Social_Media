@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Select your interests</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --blue:#2563eb;
+    --indigo:#4f46e5;
+    --indigo-dark:#4338ca;
+    --text:#0f172a;
+    --muted:#64748b;
+    --border:#e2e8f0;
+    --bg:#f8fafc;
+    --chip:#f1f5f9;
+  }
+  body{
+    font-family:'DM Sans',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:24px;
+  }
+  .phone{
+    width:100%;
+    max-width:380px;
+    background:#fff;
+    border-radius:32px;
+    padding:28px 22px 24px;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 4px 24px rgba(15,23,42,.06);
+  }
+  h1{font-size:26px;font-weight:700;margin-bottom:18px}
+  .chips{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px}
+  .chip{
+    background:var(--chip);
+    border:1px solid transparent;
+    border-radius:24px;
+    padding:8px 14px;
+    font-size:14px;
+    color:var(--text);
+    cursor:pointer;
+    user-select:none;
+    transition:all .15s;
+    display:inline-flex;align-items:center;gap:6px;
+  }
+  .chip:hover{background:#e2e8f0}
+  .chip.selected{
+    background:#eef2ff;
+    border-color:var(--indigo);
+    color:var(--indigo);
+  }
+  .counter{font-size:13px;color:var(--muted);text-align:center;margin-bottom:10px}
+  .err{color:#dc2626;font-size:13px;text-align:center;min-height:18px;margin-bottom:6px}
+  .btn{
+    width:100%;padding:15px;background:var(--indigo);color:#fff;
+    border:none;border-radius:30px;font-size:16px;font-weight:700;cursor:pointer;
+  }
+  .btn:hover{background:var(--indigo-dark)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+</style>
+</head>
+<body>
+  <div class="phone">
+    <h1>Select your interests</h1>
+    <div class="chips" id="chips">Loading...</div>
+    <div class="counter" id="counter">0 selected — pick at least 3 to get friend suggestions</div>
+    <div class="err" id="err"></div>
+    <button class="btn" id="next">Get started</button>
+  </div>
+
+<script>
+const API_BASE = "http://localhost:5001/api";
+const token = localStorage.getItem("token");
+if (!token) location.href = "login.html";
+
+const chips = document.getElementById("chips");
+const counter = document.getElementById("counter");
+const selected = new Set();
+
+async function load() {
+  try {
+    const r = await fetch(API_BASE + "/hobbies");
+    const data = await r.json();
+    chips.innerHTML = "";
+    (data.hobbies || []).forEach(h => {
+      const el = document.createElement("div");
+      el.className = "chip";
+      el.dataset.name = h.name;
+      el.innerHTML = `<span>${h.emoji || ""}</span><span>${h.name}</span>`;
+      el.addEventListener("click", () => {
+        if (selected.has(h.name)) {
+          selected.delete(h.name);
+          el.classList.remove("selected");
+        } else {
+          selected.add(h.name);
+          el.classList.add("selected");
+        }
+        updateCounter();
+      });
+      chips.appendChild(el);
+    });
+  } catch {
+    chips.textContent = "Failed to load interests";
+  }
+}
+
+function updateCounter() {
+  const n = selected.size;
+  counter.textContent = n < 3
+    ? `${n} selected — pick at least 3 to get friend suggestions`
+    : `${n} selected — great, you'll get friend suggestions`;
+}
+
+document.getElementById("next").addEventListener("click", async () => {
+  const err = document.getElementById("err");
+  err.textContent = "";
+  if (selected.size === 0) { err.textContent = "Pick at least one interest"; return; }
+  try {
+    const r = await fetch(API_BASE + "/hobbies/me", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ hobbies: [...selected] }),
+    });
+    const data = await r.json();
+    if (!r.ok) { err.textContent = data.message || "Failed to save"; return; }
+    location.href = "onboarding-friends.html";
+  } catch { err.textContent = "Server error"; }
+});
+
+load();
+</script>
+</body>
+</html>

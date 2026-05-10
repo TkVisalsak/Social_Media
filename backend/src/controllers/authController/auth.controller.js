@@ -174,7 +174,7 @@ export const resetPassword = TryCatch(async (req, res) => {
 });
 
 export const personal_info = TryCatch(async (req, res) => {
-  const { firstName, lastName, dob, gender, bio } = req.body;
+  const { firstName, lastName, dob, gender, bio, phoneNumber } = req.body;
   const userId = req.user._id;
 
   const update = {};
@@ -183,6 +183,7 @@ export const personal_info = TryCatch(async (req, res) => {
   if (dob !== undefined) update.dob = dob;
   if (gender !== undefined) update.gender = gender;
   if (bio !== undefined) update.bio = bio;
+  if (phoneNumber !== undefined) update.phoneNumber = phoneNumber;
 
   await User.findByIdAndUpdate(userId, update);
   res.json({ success: true, message: "Profile updated" });
