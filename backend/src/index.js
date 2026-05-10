@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import mongoSanitize from "express-mongo-sanitize";
+// import mongoSanitize from "express-mongo-sanitize";
 import rateLimit from "express-rate-limit";
 
 import { connectDB } from "./lib/db.js";
@@ -35,11 +35,36 @@ const app = express();
 const server = http.createServer(app);
 initSocket(server);
 
-// ── Security & parsing middleware ────────────────────
+// ── CORS ─────────────────────────────────────────────
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://127.0.0.1:3000",
+  "http://localhost:5500",
+  "http://localhost:5501",
+  "http://localhost:5502",
+  "http://127.0.0.1:5500",
+  "http://127.0.0.1:5501",
+  "http://127.0.0.1:5502",
+].filter(Boolean);
+
+const corsOptions = {
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+// Must be before every other middleware so preflight OPTIONS gets CORS headers.
+
+app.use(cors(corsOptions));
+
+// ── Security & parsing middleware ─────────────────────
 app.use(helmet());
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
-app.use(mongoSanitize());
+// app.use(mongoSanitize());
 
 if (process.env.NODE_ENV !== "test") {
   app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
@@ -53,28 +78,6 @@ app.use(
     standardHeaders: true,
     legacyHeaders: false,
     message: { success: false, message: "Too many requests" },
-  })
-);
-
-// ── CORS ─────────────────────────────────────────────
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  "http://localhost:3000",
-  "http://localhost:3001",
-  "http://127.0.0.1:3000",
-  "http://localhost:5500",
-  "http://localhost:5501",
-  "http://localhost:5502",
-  "http://127.0.0.1:5501",
-  "http://127.0.0.1:5502",
-].filter(Boolean);
-
-app.use(
-  cors({
-    origin: allowedOrigins,
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
