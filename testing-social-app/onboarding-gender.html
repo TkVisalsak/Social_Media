@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>What's your gender?</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --blue:#2563eb;
+    --blue-dark:#1d4ed8;
+    --pink:#ec4899;
+    --text:#0f172a;
+    --muted:#64748b;
+    --border:#e2e8f0;
+    --bg:#f8fafc;
+  }
+  body{
+    font-family:'DM Sans',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    padding:24px;
+  }
+  .phone{
+    width:100%;
+    max-width:360px;
+    background:#fff;
+    border-radius:32px;
+    padding:32px 24px;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 4px 24px rgba(15,23,42,.06);
+  }
+  .icon{font-size:54px;text-align:center;margin:24px 0 16px}
+  h1{color:var(--blue);font-size:24px;text-align:center;margin-bottom:8px}
+  .sub{color:var(--muted);text-align:center;margin-bottom:28px;font-size:14px}
+  .options{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:20px}
+  .opt{
+    width:104px;height:104px;border-radius:50%;
+    border:2px solid var(--border);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    cursor:pointer;background:#fff;transition:all .2s;
+  }
+  .opt .glyph{font-size:36px}
+  .opt .lbl{margin-top:6px;font-size:13px;font-weight:600;color:var(--muted)}
+  .opt.male.active{border-color:var(--blue)}
+  .opt.male.active .lbl{color:var(--blue)}
+  .opt.female.active{border-color:var(--pink)}
+  .opt.female.active .lbl{color:var(--pink)}
+  .or{color:var(--muted);font-size:14px}
+  .custom{
+    width:100%;padding:14px;background:#e2e8f0;
+    color:var(--text);border:none;border-radius:10px;
+    font-size:15px;font-weight:600;cursor:pointer;margin-bottom:12px;
+  }
+  .custom.active{background:#cbd5e1}
+  .btn{
+    width:100%;padding:14px;background:var(--blue);color:#fff;
+    border:none;border-radius:10px;font-size:16px;font-weight:600;cursor:pointer;
+  }
+  .btn:hover{background:var(--blue-dark)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .back{margin-top:auto;text-align:center;color:var(--blue);text-decoration:none;font-size:14px;padding-top:32px}
+  .err{color:#dc2626;font-size:13px;text-align:center;margin:8px 0;min-height:18px}
+</style>
+</head>
+<body>
+  <div class="phone">
+    <div class="icon">⚥</div>
+    <h1>What's your Gender?</h1>
+    <p class="sub">Select which gender do you identify as</p>
+
+    <div class="options">
+      <div class="opt male" data-g="male">
+        <div class="glyph" style="color:var(--blue)">♂</div>
+        <div class="lbl">Male</div>
+      </div>
+      <div class="or">or</div>
+      <div class="opt female" data-g="female">
+        <div class="glyph" style="color:var(--pink)">♀</div>
+        <div class="lbl">Female</div>
+      </div>
+    </div>
+
+    <button class="custom" data-g="custom">Custom</button>
+    <div class="err" id="err"></div>
+    <button class="btn" id="next">Next</button>
+
+    <a class="back" href="onboarding-dob.html">← Go back</a>
+  </div>
+
+<script>
+const API_BASE = "http://localhost:5001/api";
+const token = localStorage.getItem("token");
+if (!token) location.href = "login.html";
+
+let selected = null;
+const opts = document.querySelectorAll("[data-g]");
+opts.forEach(el => el.addEventListener("click", () => {
+  selected = el.dataset.g;
+  opts.forEach(o => o.classList.remove("active"));
+  el.classList.add("active");
+}));
+
+document.getElementById("next").addEventListener("click", async () => {
+  const err = document.getElementById("err");
+  err.textContent = "";
+  if (!selected) { err.textContent = "Please pick one"; return; }
+  try {
+    const r = await fetch(API_BASE + "/auth/personal_info", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ gender: selected }),
+    });
+    const data = await r.json();
+    if (!r.ok) { err.textContent = data.message || "Failed to save"; return; }
+    location.href = "onboarding-profile.html";
+  } catch { err.textContent = "Server error"; }
+});
+</script>
+</body>
+</html>

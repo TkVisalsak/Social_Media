@@ -103,8 +103,10 @@ async function login() {
     // optional user info
     localStorage.setItem("user", JSON.stringify(data.user));
 
-    // 🚀 redirect to feed page
-    window.location.href = "display.html";
+    // 🚀 redirect — new users go through onboarding, returning users skip to feed
+    const u = data.user || {};
+    const needsOnboarding = !u.firstName || !u.lastName;
+    window.location.href = needsOnboarding ? "onboarding-dob.html" : "display.html";
 
   } catch (err) {
     errorEl.innerText = "Server error";
