@@ -52,14 +52,29 @@ export const getmyShorts = TryCatch(async (req, res) => {
   res.json({ videos });
 });
 
-export const getAllShortByUserId = TryCatch(async (req, res) => {  
-  const userId = req.params.userId;
-  const videos = await ShortVideo.find({ userId }).sort({ createdAt: -1 });
-  res.json({ videos });
+const shapeVideo = (meId) => (v) => {
+  const { userId, likes = [], ...rest } = v;
+  return {
+    ...rest,
+    user: userId,
+    isLiked: likes.some((id) => id.toString() === meId.toString()),
+  };
+};
+
+export const getAllShortByUserId = TryCatch(async (req, res) => {
+  const { userId } = req.params;
+  const videos = await ShortVideo.find({ userId })
+    .sort({ createdAt: -1 })
+    .populate("userId", "userName profilePic firstName lastName")
+    .lean();
+  res.json({ videos: videos.map(shapeVideo(req.user._id)) });
 });
 
 export const getShorts = TryCatch(async (req, res) => {
-  const videos = await ShortVideo.find().sort({ createdAt: -1 });
-  res.json({ videos });
+  const videos = await ShortVideo.find()
+    .sort({ createdAt: -1 })
+    .populate("userId", "userName profilePic firstName lastName")
+    .lean();
+  res.json({ videos: videos.map(shapeVideo(req.user._id)) });
 });
 

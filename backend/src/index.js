@@ -26,6 +26,7 @@ import saveRoutes from "./routes/userRoute/save.route.js";
 import repostRoutes from "./routes/userRoute/repost.route.js";
 import hobbyRoutes from "./routes/userRoute/hobby.route.js";
 import storyRoutes from "./routes/storyRoute/story.route.js";
+import userSearchRoutes from "./routes/userRoute/user.search.route.js";
 
 dotenv.config();
 
@@ -61,6 +62,9 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Trust the first proxy hop (required on Render / any reverse-proxy host).
+app.set("trust proxy", 1);
+
 // ── Security & parsing middleware ─────────────────────
 app.use(helmet());
 app.use(express.json({ limit: "10mb" }));
@@ -79,6 +83,7 @@ app.use(
     standardHeaders: true,
     legacyHeaders: false,
     message: { success: false, message: "Too many requests" },
+    validate: { trustProxy: false },
   })
 );
 
@@ -102,6 +107,7 @@ app.use("/api/save", saveRoutes);
 app.use("/api/repost", repostRoutes);
 app.use("/api/hobbies", hobbyRoutes);
 app.use("/api/story", storyRoutes);
+app.use("/api/users", userSearchRoutes);
 
 // ── 404 ──────────────────────────────────────────────
 app.use((req, res) => {

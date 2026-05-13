@@ -1,0 +1,322 @@
+[
+  {
+    "email": "alice.v2@testmail.dev",
+    "password": "password123",
+    "userName": "alice_wonder2",
+    "firstName": "Alice",
+    "lastName": "Wonder",
+    "dob": "1998-04-12",
+    "gender": "female",
+    "bio": "Coffee addict. Book lover.",
+    "phoneNumber": "+1234567890",
+    "hobbies": ["Book", "Cooking", "Music"],
+    "post": {
+      "caption": "Hello world! First post 🌍",
+      "photo": "https://picsum.photos/seed/alice2/600/400"
+    }
+  },
+  {
+    "email": "bob.v2@testmail.dev",
+    "password": "password123",
+    "userName": "bob_builder2",
+    "firstName": "Bob",
+    "lastName": "Builder",
+    "dob": "1995-08-20",
+    "gender": "male",
+    "bio": "Building things one day at a time.",
+    "phoneNumber": "+1234567891",
+    "hobbies": ["Gaming", "Art", "Design"],
+    "post": {
+      "caption": "Just joined! Excited to be here.",
+      "photo": "https://picsum.photos/seed/bob2/600/400"
+    }
+  },
+  {
+    "email": "carol.v2@testmail.dev",
+    "password": "password123",
+    "userName": "carol_singer2",
+    "firstName": "Carol",
+    "lastName": "Singer",
+    "dob": "2000-12-01",
+    "gender": "female",
+    "bio": "Music is life.",
+    "phoneNumber": "+1234567892",
+    "hobbies": ["Music", "Dancing", "Yoga"],
+    "post": {
+      "caption": "Living my best life 🎵",
+      "photo": "https://picsum.photos/seed/carol2/600/400"
+    }
+  },
+  {
+    "email": "dave.v2@testmail.dev",
+    "password": "password123",
+    "userName": "dave_explorer2",
+    "firstName": "Dave",
+    "lastName": "Explorer",
+    "dob": "1993-03-15",
+    "gender": "male",
+    "bio": "Adventure seeker.",
+    "phoneNumber": "+1234567893",
+    "hobbies": ["Camping", "Outdoor activities", "Photography"],
+    "post": {
+      "caption": "Nature never gets old 🏕️",
+      "photo": "https://picsum.photos/seed/dave2/600/400"
+    }
+  },
+  {
+    "email": "eva.v2@testmail.dev",
+    "password": "password123",
+    "userName": "eva_fit2",
+    "firstName": "Eva",
+    "lastName": "Fitness",
+    "dob": "1997-07-07",
+    "gender": "female",
+    "bio": "Gym rat. Healthy living.",
+    "phoneNumber": "+1234567894",
+    "hobbies": ["Gym & Fitness", "Healthy life", "Sports"],
+    "post": {
+      "caption": "Sweat is just fat crying 💪",
+      "photo": "https://picsum.photos/seed/eva2/600/400"
+    }
+  },
+  {
+    "email": "frank.v2@testmail.dev",
+    "password": "password123",
+    "userName": "frank_artist2",
+    "firstName": "Frank",
+    "lastName": "Artist",
+    "dob": "1990-11-30",
+    "gender": "male",
+    "bio": "Painter. Dreamer.",
+    "phoneNumber": "+1234567895",
+    "hobbies": ["Art", "Photography", "Writing"],
+    "post": {
+      "caption": "Creativity has no limits 🎨",
+      "photo": "https://picsum.photos/seed/frank2/600/400"
+    }
+  },
+  {
+    "email": "grace.v2@testmail.dev",
+    "password": "password123",
+    "userName": "grace_chef2",
+    "firstName": "Grace",
+    "lastName": "Chef",
+    "dob": "1999-02-14",
+    "gender": "female",
+    "bio": "Food is my love language.",
+    "phoneNumber": "+1234567896",
+    "hobbies": ["Cooking", "Food", "Planting"],
+    "post": {
+      "caption": "Today's special — made with love 🍜",
+      "photo": "https://picsum.photos/seed/grace2/600/400"
+    }
+  },
+  {
+    "email": "henry.v2@testmail.dev",
+    "password": "password123",
+    "userName": "henry_gamer2",
+    "firstName": "Henry",
+    "lastName": "Gamer",
+    "dob": "2001-09-09",
+    "gender": "male",
+    "bio": "GG WP.",
+    "phoneNumber": "+1234567897",
+    "hobbies": ["Gaming", "Science", "Cosmos"],
+    "post": {
+      "caption": "New high score unlocked 🎮",
+      "photo": "https://picsum.photos/seed/henry2/600/400"
+    }
+  },
+  {
+    "email": "iris.v2@testmail.dev",
+    "password": "password123",
+    "userName": "iris_traveler2",
+    "firstName": "Iris",
+    "lastName": "Traveler",
+    "dob": "1996-05-25",
+    "gender": "female",
+    "bio": "Passport full. Heart fuller.",
+    "phoneNumber": "+1234567898",
+    "hobbies": ["Foreign culture", "History", "Photography"],
+    "post": {
+      "caption": "Not all who wander are lost ✈️",
+      "photo": "https://picsum.photos/seed/iris2/600/400"
+    }
+  },
+  {
+    "email": "jack.v2@testmail.dev",
+    "password": "password123",
+    "userName": "jack_writes2",
+    "firstName": "Jack",
+    "lastName": "Writer",
+    "dob": "1994-01-18",
+    "gender": "male",
+    "bio": "Words are my superpower.",
+    "phoneNumber": "+1234567899",
+    "hobbies": ["Writing", "Book", "Movie"],
+    "post": {
+      "caption": "Chapter one begins today ✍️",
+      "photo": "https://picsum.photos/seed/jack2/600/400"
+    }
+  },
+  {
+    "email": "luna.v2@testmail.dev",
+    "password": "securpass1",
+    "userName": "luna_stargazer2",
+    "firstName": "Luna",
+    "lastName": "Starr",
+    "dob": "2002-03-21",
+    "gender": "female",
+    "bio": "Staring at the sky since forever.",
+    "phoneNumber": "+1987654320",
+    "hobbies": ["Cosmos", "Science", "Photography"],
+    "post": {
+      "caption": "The universe is calling 🌌",
+      "photo": "https://picsum.photos/seed/luna2/600/400"
+    }
+  },
+  {
+    "email": "marco.v2@testmail.dev",
+    "password": "securpass2",
+    "userName": "marco_polo2",
+    "firstName": "Marco",
+    "lastName": "Polo",
+    "dob": "1991-07-04",
+    "gender": "male",
+    "bio": "Always moving. Never settling.",
+    "phoneNumber": "+1987654321",
+    "hobbies": ["Outdoor activities", "Camping", "Foreign culture"],
+    "post": {
+      "caption": "New city, new story 🗺️",
+      "photo": "https://picsum.photos/seed/marco2/600/400"
+    }
+  },
+  {
+    "email": "nina.v2@testmail.dev",
+    "password": "securpass3",
+    "userName": "nina_ceramics2",
+    "firstName": "Nina",
+    "lastName": "Clay",
+    "dob": "1998-11-11",
+    "gender": "female",
+    "bio": "I make things with my hands.",
+    "phoneNumber": "+1987654322",
+    "hobbies": ["Ceramics", "Art", "Design"],
+    "post": {
+      "caption": "Fresh out of the kiln 🏺",
+      "photo": "https://picsum.photos/seed/nina2/600/400"
+    }
+  },
+  {
+    "email": "oscar.v2@testmail.dev",
+    "password": "securpass4",
+    "userName": "oscar_shoots2",
+    "firstName": "Oscar",
+    "lastName": "Lens",
+    "dob": "1996-09-30",
+    "gender": "male",
+    "bio": "Light chaser. Moment catcher.",
+    "phoneNumber": "+1987654323",
+    "hobbies": ["Photography", "Art", "Outdoor activities"],
+    "post": {
+      "caption": "Golden hour never misses 📷",
+      "photo": "https://picsum.photos/seed/oscar2/600/400"
+    }
+  },
+  {
+    "email": "priya.v2@testmail.dev",
+    "password": "securpass5",
+    "userName": "priya_dances2",
+    "firstName": "Priya",
+    "lastName": "Sharma",
+    "dob": "2000-05-17",
+    "gender": "female",
+    "bio": "Dance is my therapy.",
+    "phoneNumber": "+1987654324",
+    "hobbies": ["Dancing", "Music", "Yoga"],
+    "post": {
+      "caption": "Move like nobody's watching 💃",
+      "photo": "https://picsum.photos/seed/priya2/600/400"
+    }
+  },
+  {
+    "email": "quinn.v2@testmail.dev",
+    "password": "securpass6",
+    "userName": "quinn_builds2",
+    "firstName": "Quinn",
+    "lastName": "Dev",
+    "dob": "1997-02-28",
+    "gender": "male",
+    "bio": "Turning coffee into code.",
+    "phoneNumber": "+1987654325",
+    "hobbies": ["Science", "Design", "Architecture"],
+    "post": {
+      "caption": "Shipped something cool today 🚀",
+      "photo": "https://picsum.photos/seed/quinn2/600/400"
+    }
+  },
+  {
+    "email": "rosa.v2@testmail.dev",
+    "password": "securpass7",
+    "userName": "rosa_green2",
+    "firstName": "Rosa",
+    "lastName": "Green",
+    "dob": "1993-08-08",
+    "gender": "female",
+    "bio": "Plant mom. Sustainability advocate.",
+    "phoneNumber": "+1987654326",
+    "hobbies": ["Planting", "Healthy life", "Cooking"],
+    "post": {
+      "caption": "My little urban jungle 🪴",
+      "photo": "https://picsum.photos/seed/rosa2/600/400"
+    }
+  },
+  {
+    "email": "sam.v2@testmail.dev",
+    "password": "securpass8",
+    "userName": "sam_historian2",
+    "firstName": "Sam",
+    "lastName": "Chronicle",
+    "dob": "1989-12-25",
+    "gender": "male",
+    "bio": "The past shapes the future.",
+    "phoneNumber": "+1987654327",
+    "hobbies": ["History", "Architecture", "Book"],
+    "post": {
+      "caption": "Every stone has a story ⛩️",
+      "photo": "https://picsum.photos/seed/sam2/600/400"
+    }
+  },
+  {
+    "email": "tara.v2@testmail.dev",
+    "password": "securpass9",
+    "userName": "tara_films2",
+    "firstName": "Tara",
+    "lastName": "Frame",
+    "dob": "2001-06-14",
+    "gender": "female",
+    "bio": "Cinema is my escape.",
+    "phoneNumber": "+1987654328",
+    "hobbies": ["Movie", "Writing", "Music"],
+    "post": {
+      "caption": "Lights, camera, popcorn 🎬",
+      "photo": "https://picsum.photos/seed/tara2/600/400"
+    }
+  },
+  {
+    "email": "zoe.v2@testmail.dev",
+    "password": "securpass10",
+    "userName": "zoe_spiritual",
+    "firstName": "Zoe",
+    "lastName": "Soul",
+    "dob": "1999-10-31",
+    "gender": "female",
+    "bio": "Mindful. Present. Grateful.",
+    "phoneNumber": "+1987654329",
+    "hobbies": ["Spirituality", "Yoga", "Planting"],
+    "post": {
+      "caption": "Still waters run deep 🔮",
+      "photo": "https://picsum.photos/seed/zoe2/600/400"
+    }
+  }
+]

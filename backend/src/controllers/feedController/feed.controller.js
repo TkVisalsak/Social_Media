@@ -346,6 +346,28 @@ const interleaveWithBias = (array) => {
 };
 
 /* -------------------------------------------------------------------------- */
+/*                            GET POSTS BY USER                               */
+/* -------------------------------------------------------------------------- */
+
+export const getUserPosts = TryCatch(async (req, res) => {
+  const { userId } = req.params;
+  const page  = parseInt(req.query.page)  || 1;
+  const limit = parseInt(req.query.limit) || 12;
+  const skip  = (page - 1) * limit;
+
+  const posts = await Feed.find({ userId })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .populate("userId", "userName profilePic firstName lastName")
+    .lean();
+
+  const shaped = posts.map(({ userId: u, ...rest }) => ({ ...rest, user: u }));
+
+  res.json({ success: true, data: shaped });
+});
+
+/* -------------------------------------------------------------------------- */
 /*                                GET BY ID                                   */
 /* -------------------------------------------------------------------------- */
 

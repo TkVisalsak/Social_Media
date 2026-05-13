@@ -84,55 +84,45 @@ export const getMyHobbies = TryCatch(async (req, res) => {
  */
 export const getFriendSuggestions = TryCatch(async (req, res) => {
   const userId = req.user._id;
-  const minMatches = Math.max(1, parseInt(req.query.min, 10) || 3);
-  const limit = Math.min(50, parseInt(req.query.limit, 10) || 20);
+  const limit  = Math.min(50, parseInt(req.query.limit, 10) || 20);
 
-  const me = await User.findById(userId).select("hobbies");
+  const me        = await User.findById(userId).select("hobbies");
   const myHobbies = me?.hobbies || [];
 
-  if (myHobbies.length < minMatches) {
-    return res.json({
-      success: true,
-      minMatches,
-      myHobbyCount: myHobbies.length,
-      suggestions: [],
-      message: `Pick at least ${minMatches} hobbies to get suggestions`,
-    });
-  }
-
   const followingDocs = await Follow.find({ follower: userId }).select("following");
-  const excludeIds = followingDocs.map((f) => f.following);
+  const excludeIds    = followingDocs.map((f) => f.following);
   excludeIds.push(userId);
 
-  const suggestions = await User.aggregate([
-    {
-      $match: {
-        _id: { $nin: excludeIds },
-        hobbies: { $in: myHobbies },
-      },
-    },
-    {
-      $addFields: {
-        matchCount: {
-          $size: { $setIntersection: ["$hobbies", myHobbies] },
+  // If user has hobbies, match by overlap (at least 1 shared); otherwise fall
+  // back to a general "people you might know" list sorted by join date.
+  let suggestions;
+
+  if (myHobbies.length > 0) {
+    suggestions = await User.aggregate([
+      {
+        $match: {
+          _id:     { $nin: excludeIds },
+          hobbies: { $in: myHobbies },
         },
       },
-    },
-    { $match: { matchCount: { $gte: minMatches } } },
-    { $sort: { matchCount: -1, createdAt: -1 } },
-    { $limit: limit },
-    {
-      $project: {
-        password: 0,
-        __v: 0,
+      {
+        $addFields: {
+          matchCount: { $size: { $setIntersection: ["$hobbies", myHobbies] } },
+        },
       },
-    },
-  ]);
+      { $sort: { matchCount: -1, createdAt: -1 } },
+      { $limit: limit },
+      { $project: { password: 0, __v: 0 } },
+    ]);
+  } else {
+    // No hobbies yet — suggest newest users
+    suggestions = await User.find({ _id: { $nin: excludeIds } })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .select("-password -__v")
+      .lean();
+    suggestions = suggestions.map((u) => ({ ...u, matchCount: 0 }));
+  }
 
-  res.json({
-    success: true,
-    minMatches,
-    count: suggestions.length,
-    suggestions,
-  });
+  res.json({ success: true, count: suggestions.length, suggestions });
 });

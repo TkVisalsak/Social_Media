@@ -5,6 +5,7 @@ import upload from "../../middleware/multer.middleware.js";
 import {
   createFeed,
   getUserFeed,
+  getUserPosts,
   getFeedById,
   deleteFeed,
   updateCaption,
@@ -22,6 +23,7 @@ router.post(
 
  
 router.get("/", protectRoute, getUserFeed);
+router.get("/user/:userId", protectRoute, getUserPosts);
 
  
 router.get("/:id", protectRoute, getFeedById);
