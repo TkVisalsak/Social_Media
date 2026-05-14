@@ -95,7 +95,7 @@ export const getFriendSuggestions = TryCatch(async (req, res) => {
 
   // If user has hobbies, match by overlap (at least 1 shared); otherwise fall
   // back to a general "people you might know" list sorted by join date.
-  let suggestions;
+  let suggestions = [];
 
   if (myHobbies.length > 0) {
     suggestions = await User.aggregate([
@@ -114,14 +114,16 @@ export const getFriendSuggestions = TryCatch(async (req, res) => {
       { $limit: limit },
       { $project: { password: 0, __v: 0 } },
     ]);
-  } else {
-    // No hobbies yet — suggest newest users
-    suggestions = await User.find({ _id: { $nin: excludeIds } })
+  }
+
+  // Fall back to newest users when no hobby overlap found (or user has no hobbies)
+  if (suggestions.length === 0) {
+    const newest = await User.find({ _id: { $nin: excludeIds } })
       .sort({ createdAt: -1 })
       .limit(limit)
       .select("-password -__v")
       .lean();
-    suggestions = suggestions.map((u) => ({ ...u, matchCount: 0 }));
+    suggestions = newest.map((u) => ({ ...u, matchCount: 0 }));
   }
 
   res.json({ success: true, count: suggestions.length, suggestions });
