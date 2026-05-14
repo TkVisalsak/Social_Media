@@ -1,9 +1,18 @@
 import User from "../../models/usersModel/user.model.js";
 import Message from "../../models/messagesModel/message.model.js";
 import Conversation from "../../models/messagesModel/conversation.model.js";
+import Follow from "../../models/usersModel/follow.model.js";
 import cloudinary from "../../lib/cloudinary.js";
 import { io, getReceiverSocketIds } from "../../socket/socket.js";
 import TryCatch from "../../utils/Trycatch.js";
+
+async function areFriends(userA, userB) {
+  const [a, b] = await Promise.all([
+    Follow.exists({ follower: userA, following: userB }),
+    Follow.exists({ follower: userB, following: userA }),
+  ]);
+  return a && b;
+}
 
 /**
  * Sidebar users (paginated). Returns users the caller could DM.
@@ -84,6 +93,21 @@ export const sendMessage = TryCatch(async (req, res) => {
       isGroup: false,
       members: [senderId, receiverId],
     });
+  }
+
+  // Non-mutual: allow only 1 message until the other person replies.
+  const mutual = await areFriends(senderId, receiverId);
+  if (!mutual) {
+    const [myCount, theirCount] = await Promise.all([
+      Message.countDocuments({ conversationId: conversation._id, senderId }),
+      Message.countDocuments({ conversationId: conversation._id, senderId: { $ne: senderId } }),
+    ]);
+    if (myCount >= 1 && theirCount === 0) {
+      return res.status(403).json({
+        success: false,
+        message: "Waiting for reply before you can send more messages",
+      });
+    }
   }
 
   const newMessage = await Message.create({

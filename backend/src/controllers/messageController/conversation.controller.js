@@ -25,14 +25,14 @@ export const getMyConversations = TryCatch(async (req, res) => {
   for (const conv of conversations) {
     if (!conv.lastMessage) continue;
 
+    let isMutual = conv.isGroup;
     if (!conv.isGroup) {
       const other = conv.members.find((m) => m._id.toString() !== userId.toString());
       if (!other) continue;
-      const friend = await areFriends(userId, other._id);
-      if (!friend) continue;
+      isMutual = !!(await areFriends(userId, other._id));
     }
 
-    result.push(conv);
+    result.push({ ...conv.toObject(), isMutual });
   }
 
   res.json(result);
@@ -43,10 +43,7 @@ export const getOrCreateDM = TryCatch(async (req, res) => {
   const me    = req.user._id;
   const other = req.params.userId;
 
-  const friend = await areFriends(me, other);
-  if (!friend) {
-    return res.status(403).json({ message: "You can only DM mutual friends" });
-  }
+  const isMutual = !!(await areFriends(me, other));
 
   let conv = await Conversation.findOne({
     isGroup: false,
@@ -58,7 +55,7 @@ export const getOrCreateDM = TryCatch(async (req, res) => {
     conv = await conv.populate("members", "userName profilePic");
   }
 
-  res.json(conv);
+  res.json({ ...conv.toObject(), isMutual });
 });
 
 // POST /api/conversations/group

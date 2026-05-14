@@ -50,7 +50,16 @@ export function initSocket(server) {
         if (!conv.isGroup) {
           const otherId = conv.members.find((m) => m.toString() !== userId);
           const friend  = await areFriends(userId, otherId);
-          if (!friend) return socket.emit("error", "Not friends");
+          if (!friend) {
+            // Non-mutual: allow only 1 message until the other person replies.
+            const [myCount, theirCount] = await Promise.all([
+              Message.countDocuments({ conversationId, senderId: userId }),
+              Message.countDocuments({ conversationId, senderId: { $ne: userId } }),
+            ]);
+            if (myCount >= 1 && theirCount === 0) {
+              return socket.emit("error", "Waiting for reply before you can send more messages");
+            }
+          }
         }
 
         if (!text && !image) return socket.emit("error", "Empty message");
