@@ -1,9 +1,10 @@
 import express from "express";
-import { followUser, getFollowers, getFollowing, unfollowUser, checkIfFollowing } from "../../controllers/userController/follow.controller.js";
+import { followUser, getFollowers, getFollowing, unfollowUser, checkIfFollowing, getNotFollowingBack } from "../../controllers/userController/follow.controller.js";
 import { protectRoute } from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 
+router.get("/not-following-back",    protectRoute, getNotFollowingBack);
 router.post("/:userId",              protectRoute, followUser);
 router.delete("/unfollow/:userId",   protectRoute, unfollowUser);
 router.get("/followers/:userId",     protectRoute, getFollowers);

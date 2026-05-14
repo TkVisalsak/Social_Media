@@ -4,6 +4,7 @@ import cloudinary from "cloudinary";
 import Feed from "../../models/feedModel/feed.model.js";
 import Follow from "../../models/usersModel/follow.model.js";
 import Like from "../../models/feedModel/feed.like.model.js";
+import Save from "../../models/usersModel/save.model.js";
 import TryCatch from "../../utils/Trycatch.js";
 import getDataUrl from "../../utils/urlGenrator.js";
 
@@ -258,7 +259,7 @@ export const getUserFeed = TryCatch(async (req, res) => {
     ]);
   }
 
-  // ---------- 5. isLiked flag (one query for the page) ----------
+  // ---------- 5. isLiked + isSaved flags (one query each for the page) ----------
   const allPosts = [...primaryPosts, ...discoveryPosts];
   const postIds = allPosts.map((p) => p._id);
 
@@ -270,6 +271,16 @@ export const getUserFeed = TryCatch(async (req, res) => {
     .lean();
 
   const likedSet = new Set(myLikes.map((l) => l.feedId.toString()));
+
+  const mySaves = await Save.find({
+    userId: me,
+    contentId: { $in: postIds },
+    contentType: "feed",
+  })
+    .select("contentId")
+    .lean();
+
+  const savedSet = new Set(mySaves.map((s) => s.contentId.toString()));
 
   // ---------- 6. Shape response ----------
   const shaped = allPosts.map((post) => {
@@ -297,6 +308,7 @@ export const getUserFeed = TryCatch(async (req, res) => {
         fullName,
       },
       isLiked: likedSet.has(post._id.toString()),
+      isSaved: savedSet.has(post._id.toString()),
       isFollowed: followingSet.has(post.author._id.toString()),
       source: post.source, // 'primary' | 'discovery'
     };
@@ -440,4 +452,45 @@ export const updateCaption = TryCatch(async (req, res) => {
   await feed.save();
 
   res.json({ message: "Caption updated", data: feed });
+});
+
+/* -------------------------------------------------------------------------- */
+/*                          GET LIKED POSTS BY USER                           */
+/* -------------------------------------------------------------------------- */
+
+// GET /api/feeds/liked/:userId
+export const getLikedPostsByUser = TryCatch(async (req, res) => {
+  const { userId } = req.params;
+  const myId = req.user._id;
+
+  const likes = await Like.find({ userId }).select("feedId").lean();
+  const feedIds = likes.map((l) => l.feedId);
+
+  const posts = await Feed.find({ _id: { $in: feedIds } })
+    .populate("userId", "userName profilePic firstName lastName")
+    .sort({ createdAt: -1 })
+    .lean();
+
+  // Add isSaved + isLiked flags for current viewer
+  const myLikes = await Like.find({
+    userId: myId,
+    feedId: { $in: feedIds },
+  }).select("feedId").lean();
+  const myLikedSet = new Set(myLikes.map((l) => l.feedId.toString()));
+
+  const mySaves = await Save.find({
+    userId: myId,
+    contentId: { $in: feedIds },
+    contentType: "feed",
+  }).select("contentId").lean();
+  const mySavedSet = new Set(mySaves.map((s) => s.contentId.toString()));
+
+  const result = posts.map(({ userId: u, ...rest }) => ({
+    ...rest,
+    user: u,
+    isLiked: myLikedSet.has(rest._id.toString()),
+    isSaved: mySavedSet.has(rest._id.toString()),
+  }));
+
+  res.json({ success: true, data: result });
 });

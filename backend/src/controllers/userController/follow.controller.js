@@ -77,3 +77,24 @@ export const checkIfFollowing = TryCatch(async (req, res) => {
   const follow = await Follow.findOne({ follower: followerId, following: userId });
   res.json({ following: !!follow });
 });
+
+// GET /api/follow/not-following-back — people who follow me but I don't follow back
+export const getNotFollowingBack = TryCatch(async (req, res) => {
+  const myId = req.user._id;
+
+  // People who follow me
+  const myFollowers = await Follow.find({ following: myId })
+    .populate("follower", "userName profilePic firstName lastName")
+    .lean();
+
+  // IDs of people I follow
+  const iFollow = await Follow.find({ follower: myId }).lean();
+  const iFollowIds = new Set(iFollow.map(f => f.following.toString()));
+
+  // Return followers I don't follow back
+  const notFollowingBack = myFollowers
+    .filter(f => !iFollowIds.has(f.follower._id.toString()))
+    .map(f => f.follower);
+
+  res.json({ users: notFollowingBack });
+});

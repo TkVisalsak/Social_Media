@@ -9,6 +9,7 @@ import {
   getFeedById,
   deleteFeed,
   updateCaption,
+  getLikedPostsByUser,
 } from "../../controllers/feedController/feed.controller.js";
 
 const router = express.Router();
@@ -21,8 +22,9 @@ router.post(
   createFeed
 );
 
- 
+
 router.get("/", protectRoute, getUserFeed);
+router.get("/liked/:userId", protectRoute, getLikedPostsByUser);
 router.get("/user/:userId", protectRoute, getUserPosts);
 
  
