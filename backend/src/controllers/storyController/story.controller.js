@@ -1,5 +1,8 @@
-import Story    from "../../models/storyModel/story.model.js";
-import Follow   from "../../models/usersModel/follow.model.js";
+import Story        from "../../models/storyModel/story.model.js";
+import Follow       from "../../models/usersModel/follow.model.js";
+import Conversation from "../../models/messagesModel/conversation.model.js";
+import Message      from "../../models/messagesModel/message.model.js";
+import { io, getReceiverSocketIds } from "../../socket/socket.js";
 import cloudinary from "cloudinary";
 import TryCatch from "../../utils/Trycatch.js";
 import getDataUrl from "../../utils/urlGenrator.js";
@@ -81,6 +84,74 @@ export const getMyStories = TryCatch(async (req, res) => {
   const userId = req.user._id;
   const stories = await Story.find({ userId }).sort({ createdAt: -1 });
   res.json(stories);
+});
+
+// POST /api/story/:storyId/reply  — sends a DM to the story owner and returns the conversation
+export const replyToStory = TryCatch(async (req, res) => {
+  const senderId  = req.user._id;
+  const { storyId } = req.params;
+  const { text }  = req.body;
+
+  if (!text || !text.trim()) {
+    return res.status(400).json({ message: "Reply text is required" });
+  }
+
+  const story = await Story.findById(storyId).populate("userId", "userName profilePic");
+  if (!story) return res.status(404).json({ message: "Story not found" });
+
+  const ownerId = story.userId._id;
+
+  // Find or create the 1-to-1 conversation between the sender and the story owner.
+  let conv = await Conversation.findOne({
+    isGroup: false,
+    members: { $all: [senderId, ownerId], $size: 2 },
+  }).populate("members", "userName profilePic");
+
+  if (!conv) {
+    conv = await Conversation.create({ isGroup: false, members: [senderId, ownerId] });
+    conv = await conv.populate("members", "userName profilePic");
+  }
+
+  // Send the reply as a regular message prefixed with the story context.
+  const msgText = `Replied to your story: ${text}`;
+  const message = await Message.create({
+    conversationId: conv._id,
+    senderId,
+    text: msgText,
+    readBy: [senderId],
+  });
+
+  await Conversation.findByIdAndUpdate(conv._id, { lastMessage: message._id });
+
+  const populated = await message.populate("senderId", "userName profilePic");
+
+  // Push via socket if the owner is online.
+  getReceiverSocketIds(ownerId).forEach((socketId) => {
+    io?.to(socketId).emit("newMessage", populated);
+  });
+
+  res.json({ conversation: conv });
+});
+
+// GET /api/story/:storyId/viewers — only the story owner can view the list
+export const getStoryViewers = TryCatch(async (req, res) => {
+  const userId = req.user._id;
+  const { storyId } = req.params;
+
+  const story = await Story.findById(storyId).populate(
+    "viewers.user",
+    "userName profilePic"
+  );
+  if (!story) return res.status(404).json({ message: "Story not found" });
+
+  if (story.userId.toString() !== userId.toString()) {
+    return res.status(403).json({ message: "Not authorized to view this list" });
+  }
+
+  res.json({
+    viewers: story.viewers,
+    totalViewers: story.viewers.length,
+  });
 });
 
 export const deleteStory = TryCatch(async (req, res) => {

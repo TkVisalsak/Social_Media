@@ -19,6 +19,9 @@ const sanitizeUser = (u) => ({
   firstName: u.firstName,
   lastName: u.lastName,
   bio: u.bio,
+  followersListPublic: u.followersListPublic,
+  followingListPublic: u.followingListPublic,
+  savedPostsPublic: u.savedPostsPublic,
 });
 
 export const signup = TryCatch(async (req, res) => {
@@ -196,26 +199,36 @@ export const personal_info = TryCatch(async (req, res) => {
  */
 export const updateProfile = TryCatch(async (req, res) => {
   const userId = req.user._id;
-  let secureUrl;
+  const update = {};
 
+  // Handle image upload (file takes priority over base64 body field)
   if (req.file) {
     const fileUrl = getDataUrl(req.file);
-    const upload = await cloudinary.uploader.upload(fileUrl.content, {
+    const uploaded = await cloudinary.uploader.upload(fileUrl.content, {
       folder: "profile_pics",
     });
-    secureUrl = upload.secure_url;
+    update.profilePic = uploaded.secure_url;
   } else if (req.body.profilePic && req.body.profilePic.startsWith("data:image")) {
-    const upload = await cloudinary.uploader.upload(req.body.profilePic, {
+    const uploaded = await cloudinary.uploader.upload(req.body.profilePic, {
       folder: "profile_pics",
     });
-    secureUrl = upload.secure_url;
-  } else {
-    return res.status(400).json({ success: false, message: "No image provided" });
+    update.profilePic = uploaded.secure_url;
+  }
+
+  // Text fields — update only when provided
+  const { firstName, lastName, bio, website } = req.body;
+  if (firstName !== undefined) update.firstName = firstName;
+  if (lastName !== undefined) update.lastName = lastName;
+  if (bio !== undefined) update.bio = bio;
+  if (website !== undefined) update.website = website;
+
+  if (Object.keys(update).length === 0) {
+    return res.status(400).json({ success: false, message: "No update fields provided" });
   }
 
   const updatedUser = await User.findByIdAndUpdate(
     userId,
-    { profilePic: secureUrl },
+    update,
     { new: true }
   ).select("-password");
 

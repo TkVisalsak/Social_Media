@@ -1,6 +1,7 @@
 import Like from "../../models/feedModel/feed.like.model.js";
 import Feed from "../../models/feedModel/feed.model.js";
 import TryCatch from "../../utils/Trycatch.js";
+import { createNotification } from "../notificationController/notification.controller.js";
 
 //like and unlike feed
 export const toggleLike = TryCatch(async (req, res) => {
@@ -25,6 +26,15 @@ export const toggleLike = TryCatch(async (req, res) => {
   // Otherwise → create like
   try {
     await Like.create({ userId, feedId });
+
+    // Notify the post owner (skip if liker == owner)
+    createNotification({
+      recipient:  feed.userId,
+      actor:      userId,
+      type:       "like",
+      targetId:   feedId,
+      targetType: "feed",
+    }).catch(() => {});
 
     return res.json({
       message: "Liked",
@@ -63,4 +73,20 @@ export const checkUserLike = TryCatch(async (req, res) => {
   res.json({
     liked: !!liked,
   });
+});
+
+export const incrementShareCount = TryCatch(async (req, res) => {
+  const feedId = req.params.id;
+
+  const feed = await Feed.findByIdAndUpdate(
+    feedId,
+    { $inc: { sharesCount: 1 } },
+    { new: true }
+  );
+
+  if (!feed) {
+    return res.status(404).json({ message: "Feed not found" });
+  }
+
+  res.json({ sharesCount: feed.sharesCount });
 });

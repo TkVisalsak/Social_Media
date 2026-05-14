@@ -1,6 +1,7 @@
 import Comment from "../../models/feedModel/feed.comment.model.js";
 import Feed from "../../models/feedModel/feed.model.js";
 import TryCatch from "../../utils/Trycatch.js";
+import { createNotification } from "../notificationController/notification.controller.js";
 
 //Create comment and reply
 export const createComment = TryCatch(async (req, res) => {
@@ -50,6 +51,15 @@ export const createComment = TryCatch(async (req, res) => {
     "userId",
     "userName profilePic firstName lastName"
   );
+
+  // Notify the post owner of the new comment (not for self-comments)
+  createNotification({
+    recipient:  feed.userId,
+    actor:      userId,
+    type:       "comment",
+    targetId:   feedId,
+    targetType: "feed",
+  }).catch(() => {});
 
   res.status(201).json({
     message: parentId ? "Reply added" : "Comment added",

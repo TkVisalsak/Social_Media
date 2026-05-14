@@ -50,6 +50,19 @@ const  userSchema = new mongoose.Schema(
         index: true,
     },
 
+    followersListPublic: {
+        type: Boolean,
+        default: true,
+    },
+    followingListPublic: {
+        type: Boolean,
+        default: true,
+    },
+    savedPostsPublic: {
+        type: Boolean,
+        default: false,
+    },
+
 },
     {timestamps: true}
 );

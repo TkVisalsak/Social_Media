@@ -6,8 +6,8 @@ const router = express.Router();
 
 router.post("/:userId",              protectRoute, followUser);
 router.delete("/unfollow/:userId",   protectRoute, unfollowUser);
-router.get("/followers/:userId",     getFollowers);
-router.get("/following/:userId",     getFollowing);
+router.get("/followers/:userId",     protectRoute, getFollowers);
+router.get("/following/:userId",     protectRoute, getFollowing);
 router.get("/check/:userId",         protectRoute, checkIfFollowing);
 
 export default router;

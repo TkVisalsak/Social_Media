@@ -22,6 +22,7 @@ import {
   googleCallback,
   oAuthPersonal_info,
 } from "../../controllers/authController/google.controller.js";
+import { updatePrivacy } from "../../controllers/authController/privacy.controller.js";
 
 import { protectRoute } from "../../middleware/auth.middleware.js";
 import { protectAuthRoute } from "../../middleware/oAuth.middleware.js";
@@ -94,6 +95,7 @@ router.put(
   upload.single("profilePic"),
   updateProfile
 );
+router.put("/privacy", protectRoute, updatePrivacy);
 router.get("/user/:id", getUserById);
 router.get("/me", protectRoute, getMe);
 router.get("/check", protectRoute, checkAuth);

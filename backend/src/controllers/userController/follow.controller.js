@@ -36,6 +36,17 @@ export const unfollowUser = TryCatch(async (req, res) => {
 
 export const getFollowers = TryCatch(async (req, res) => {
   const { userId } = req.params;
+  const requesterId = req.user._id;
+
+  // Privacy check: only enforce when the requester is not the owner
+  if (requesterId.toString() !== userId.toString()) {
+    const targetUser = await User.findById(userId).select("followersListPublic");
+    if (!targetUser) return res.status(404).json({ message: "User not found" });
+    if (targetUser.followersListPublic === false) {
+      return res.status(403).json({ message: "This list is private" });
+    }
+  }
+
   const followers = await Follow.find({ following: userId })
     .populate("follower", "userName profilePic firstName lastName");
   res.json({ followers });
@@ -43,6 +54,17 @@ export const getFollowers = TryCatch(async (req, res) => {
 
 export const getFollowing = TryCatch(async (req, res) => {
   const { userId } = req.params;
+  const requesterId = req.user._id;
+
+  // Privacy check: only enforce when the requester is not the owner
+  if (requesterId.toString() !== userId.toString()) {
+    const targetUser = await User.findById(userId).select("followingListPublic");
+    if (!targetUser) return res.status(404).json({ message: "User not found" });
+    if (targetUser.followingListPublic === false) {
+      return res.status(403).json({ message: "This list is private" });
+    }
+  }
+
   const following = await Follow.find({ follower: userId })
     .populate("following", "userName profilePic firstName lastName");
   res.json({ following });

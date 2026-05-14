@@ -27,6 +27,8 @@ import repostRoutes from "./routes/userRoute/repost.route.js";
 import hobbyRoutes from "./routes/userRoute/hobby.route.js";
 import storyRoutes from "./routes/storyRoute/story.route.js";
 import userSearchRoutes from "./routes/userRoute/user.search.route.js";
+import notificationRoutes from "./routes/notificationRoute/notification.route.js";
+import highlightRoutes from "./routes/highlightRoute/highlight.route.js";
 
 dotenv.config();
 
@@ -108,6 +110,8 @@ app.use("/api/repost", repostRoutes);
 app.use("/api/hobbies", hobbyRoutes);
 app.use("/api/story", storyRoutes);
 app.use("/api/users", userSearchRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/highlights", highlightRoutes);
 
 // ── 404 ──────────────────────────────────────────────
 app.use((req, res) => {
