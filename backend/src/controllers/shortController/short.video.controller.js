@@ -1,5 +1,6 @@
 import ShortVideo from "../../models/shortvideosModel/short.video.model.js";
 import ShortVideoComment from "../../models/shortvideosModel/short.comment.model.js";
+import Follow from "../../models/usersModel/follow.model.js";
 import TryCatch from "../../utils/Trycatch.js";
 import { uploadToCloudinary } from "../../lib/uploadToCloudinary.js";
 
@@ -76,5 +77,28 @@ export const getShorts = TryCatch(async (req, res) => {
     .populate("userId", "userName profilePic firstName lastName")
     .lean();
   res.json({ videos: videos.map(shapeVideo(req.user._id)) });
+});
+
+export const getFriendsShorts = TryCatch(async (req, res) => {
+  const userId = req.user._id;
+
+  // Get all users that the current user follows
+  const following = await Follow.find({ follower: userId }).select("following");
+  const followingIds = following.map((f) => f.following);
+
+  if (followingIds.length === 0) {
+    return res.status(200).json({ success: true, videos: [] });
+  }
+
+  const videos = await ShortVideo.find({
+    userId: { $in: followingIds },
+    isDeleted: false,
+  })
+    .sort({ createdAt: -1 })
+    .populate("userId", "userName profilePic firstName lastName")
+    .limit(50)
+    .lean();
+
+  res.json({ videos: videos.map(shapeVideo(userId)) });
 });
 

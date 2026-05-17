@@ -1,5 +1,7 @@
+import cloudinary from "cloudinary";
 import Highlight from "../../models/highlightModel/highlight.model.js";
 import TryCatch from "../../utils/Trycatch.js";
+import getDataUrl from "../../utils/urlGenrator.js";
 
 // GET /api/highlights — get all highlights for the authenticated user
 export const getMyHighlights = TryCatch(async (req, res) => {
@@ -17,11 +19,21 @@ export const createHighlight = TryCatch(async (req, res) => {
     return res.status(400).json({ success: false, message: "Title is required" });
   }
 
+  let resolvedCoverUrl = coverUrl || "";
+  if (req.file) {
+    const fileUrl = getDataUrl(req.file);
+    const uploaded = await cloudinary.v2.uploader.upload(fileUrl.content, {
+      resource_type: "image",
+      folder: "highlights",
+    });
+    resolvedCoverUrl = uploaded.secure_url;
+  }
+
   const highlight = await Highlight.create({
     userId,
     title: title.trim(),
     storyIds: storyIds || [],
-    coverUrl: coverUrl || "",
+    coverUrl: resolvedCoverUrl,
   });
 
   res.status(201).json({ success: true, data: highlight });
@@ -45,6 +57,15 @@ export const updateHighlight = TryCatch(async (req, res) => {
   if (title !== undefined) update.title = title.trim();
   if (storyIds !== undefined) update.storyIds = storyIds;
   if (coverUrl !== undefined) update.coverUrl = coverUrl;
+
+  if (req.file) {
+    const fileUrl = getDataUrl(req.file);
+    const uploaded = await cloudinary.v2.uploader.upload(fileUrl.content, {
+      resource_type: "image",
+      folder: "highlights",
+    });
+    update.coverUrl = uploaded.secure_url;
+  }
 
   const updated = await Highlight.findByIdAndUpdate(id, update, { new: true });
   res.json({ success: true, data: updated });

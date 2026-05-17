@@ -40,11 +40,12 @@ export const createComment = TryCatch(async (req, res) => {
     parentId: parentId || null,
   });
 
-  
   if (parentId) {
     await Comment.findByIdAndUpdate(parentId, {
       $inc: { commentCount: 1 },
     });
+  } else {
+    await Feed.findByIdAndUpdate(feedId, { $inc: { commentsCount: 1 } });
   }
 
   const populatedComment = await comment.populate(
@@ -110,9 +111,11 @@ export const deleteComment = TryCatch(async (req, res) => {
     await Comment.findByIdAndUpdate(comment.parentId, {
       $inc: { commentCount: -1 },
     });
+  } else {
+    await Feed.findByIdAndUpdate(comment.feedId, { $inc: { commentsCount: -1 } });
   }
 
-  // 🔥 delete comment + its replies
+  // delete comment + its replies
   await Comment.deleteMany({
     $or: [{ _id: commentId }, { parentId: commentId }],
   });

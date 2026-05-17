@@ -33,6 +33,22 @@ export const toggleShortLike = TryCatch(async (req, res) => {
   });
 });
 
+export const incrementShortShare = TryCatch(async (req, res) => {
+  const videoId = req.params.id;
+
+  const video = await ShortVideo.findByIdAndUpdate(
+    videoId,
+    { $inc: { shareCount: 1 } },
+    { new: true }
+  );
+
+  if (!video) {
+    return res.status(404).json({ message: "Video not found" });
+  }
+
+  res.json({ shareCount: video.shareCount });
+});
+
 export const getShortLikeStatus = TryCatch(async (req, res) => {
   const videoId = req.params.id;
   const userId = req.user._id;

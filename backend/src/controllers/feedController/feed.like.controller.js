@@ -17,6 +17,7 @@ export const toggleLike = TryCatch(async (req, res) => {
 
   // If something was deleted → it was liked → now unliked
   if (deleted) {
+    await Feed.findByIdAndUpdate(feedId, { $inc: { likesCount: -1 } });
     return res.json({
       message: "Unliked",
       liked: false,
@@ -26,6 +27,7 @@ export const toggleLike = TryCatch(async (req, res) => {
   // Otherwise → create like
   try {
     await Like.create({ userId, feedId });
+    await Feed.findByIdAndUpdate(feedId, { $inc: { likesCount: 1 } });
 
     // Notify the post owner (skip if liker == owner)
     createNotification({
