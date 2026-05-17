@@ -29,7 +29,7 @@ export const createRepost = async (req, res, next) => {
       visibility: visibility || original.visibility || "public",
     });
 
-    await ContentModel.findByIdAndUpdate(contentId, { $inc: { sharesCount: 1 } }, { new: true });
+    await ContentModel.findByIdAndUpdate(contentId, { $inc: { repostsCount: 1 } }, { new: true });
 
     res.status(201).json({ success: true, data: repost });
   } catch (error) {
@@ -47,7 +47,7 @@ export const deleteRepost = TryCatch(async (req, res) => {
   }
 
   const ContentModel = repost.contentType === "feed" ? Feed : Short;
-  await ContentModel.findByIdAndUpdate(repost.contentId, { $inc: { sharesCount: -1 } });
+  await ContentModel.findByIdAndUpdate(repost.contentId, { $inc: { repostsCount: -1 } });
   await repost.deleteOne();
 
   res.status(200).json({ success: true, message: "Repost removed" });

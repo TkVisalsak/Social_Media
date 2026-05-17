@@ -48,6 +48,11 @@ const feedSchema = new mongoose.Schema(
       default: 0,
     },
 
+    repostsCount: {
+      type: Number,
+      default: 0,
+    },
+
     visibility: {
       type: String,
       enum: ["public", "friends", "private", "followers"],
